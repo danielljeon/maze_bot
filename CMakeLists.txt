@@ -55,7 +55,10 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         Core/sh2/shtp.c
         Core/Src/bno085_runner.c
         Core/Src/callbacks.c
+        Core/Src/controls.c
         Core/Src/h_bridge_control.c
+        Core/Src/pid.c
+        Core/Src/scheduler.c
         Core/Src/servo_control.c
         Core/Src/sh2_hal_spi.c
         Core/Src/vl53l4cd_runner.c

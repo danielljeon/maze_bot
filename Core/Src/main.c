@@ -21,7 +21,12 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "bno085_runner.h"
+#include "h_bridge_control.h"
+#include "servo_control.h"
+#include "scheduler.h"
+#include "vl53l4cd_runner.h"
+#include "controls.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -117,8 +122,39 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
+  HAL_Delay(2000);
+
+  // Sensors.
+  bno085_reset();
+  bno085_init();
+  // vl53l4cd_init(); // TODO: Balance resources.
+  // vl53l4cd_start();
+
+  // Initialize motor drivers.
+  servo_command_init();
+  h_bridge_command_init();
+
+  // Initialize control loops.
+  control_loops_init();
+
+  scheduler_init(); // Initialize scheduler.
+  void (*heading_task)(void) = heading_loop;
+  void (*yaw_rate_task)(void) = yaw_rate_loop;
+  scheduler_add_task(heading_task, 10);
+  scheduler_add_task(yaw_rate_task, 5);
+  scheduler_add_task(actuate_loop, 20);
+
+  // TODO: controls bench testing.
+  heading_setpoint_rad = 1.570796f;
+
+  // servo_command(1000);
+  // servo_command(2000);
+  // h_bridge_1_command(GPIO_PIN_RESET, GPIO_PIN_SET, 80);
+  // h_bridge_2_command(GPIO_PIN_RESET, GPIO_PIN_SET, 80);
+
+  while (1) {
+    scheduler_run();
+    bno085_run(); // BNO085 process.
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
