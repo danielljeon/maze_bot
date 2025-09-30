@@ -191,6 +191,18 @@ void bno085_init(void) {
   // Reset now possible it since sensor reports will be started.
   reset_occurred = false;
 
+  // TODO(Maze bot): Hardware orientation for rotation vectors.
+  // Clear tare.
+  sh2_Quaternion_t vector = {.x = 0.0f, .y = 0.0f, .z = 0.0f, .w = 1.0f};
+  sh2_setReorientation(&vector);
+  // Reorient.
+  // q14(0.70710678f) = 11585, q14(-0.70710678f) = -11585.
+  vector.x = -11585;
+  vector.y = 0;
+  vector.z = 0;
+  vector.w = 11585;
+  sh2_setReorientation(&vector);
+
   // Start the flow of sensor reports.
   start_reports();
 }
