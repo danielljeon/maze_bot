@@ -12,11 +12,12 @@
 typedef enum state_machine {
   STATE_IDLE = 0,
   STATE_INIT = 1,
-  STATE_MOMENTARY_SENSE = 2,
-  STATE_TURN = 3,
-  STATE_ADVANCE = 4,
-  STATE_PICKUP_PACKAGE = 5,
-  STATE_DROP_PACKAGE = 6,
+  STATE_STANDBY = 2,
+  STATE_MOMENTARY_SENSE = 3,
+  STATE_TURN = 4,
+  STATE_ADVANCE = 5,
+  STATE_PICKUP_PACKAGE = 6,
+  STATE_DROP_PACKAGE = 7,
 } state_t;
 
 /** Public variables. *********************************************************/
