@@ -149,10 +149,6 @@ int main(void)
   scheduler_add_task(run_state_machine_task, 10);
   scheduler_add_task(drive_task, 2);
 
-  // TODO: controls bench testing.
-  zero_heading();
-  set_relative_heading(0);
-
   while (1) {
     scheduler_run();
     bno085_run(); // BNO085 process.
