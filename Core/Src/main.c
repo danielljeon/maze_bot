@@ -142,10 +142,10 @@ int main(void)
   void (*yaw_rate_task)(void) = yaw_rate_loop;
   scheduler_add_task(heading_task, 10);
   scheduler_add_task(yaw_rate_task, 5);
-  scheduler_add_task(actuate_loop, 20);
 
   // TODO: controls bench testing.
-  heading_setpoint_rad = 1.570796f;
+  set_zero_heading(); // Zero the local absolute heading.
+  set_absolute_heading(1.570796f);
 
   // servo_command(1000);
   // servo_command(2000);
