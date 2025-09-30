@@ -25,12 +25,13 @@ void pid_init(pid_controller_t *pid) {
   pid->out = 0.0f;
 }
 
-float pid_update(pid_controller_t *pid, float set_point, float measurement) {
+float pid_update(pid_controller_t *pid, const float set_point,
+                 const float measurement) {
   // Error signal.
-  float error = set_point - measurement;
+  const float error = set_point - measurement;
 
   // Proportional.
-  float proportional = pid->k_p * error;
+  const float proportional = pid->k_p * error;
 
   // Integral.
   pid->integrator += 0.5f * pid->k_i * pid->T * (error + pid->prev_error);
