@@ -123,13 +123,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  HAL_Delay(2000);
-
-  // Sensors.
-  bno085_reset();
-  bno085_init();
-  // vl53l4cd_init(); // TODO: Balance resources.
-  // vl53l4cd_start();
+  HAL_Delay(5000);
 
   // Initialize motor drivers.
   servo_command_init();
@@ -151,7 +145,10 @@ int main(void)
 
   while (1) {
     scheduler_run();
-    bno085_run(); // BNO085 process.
+
+    if (bot_state != STATE_STANDBY) {
+      bno085_run(); // BNO085 process.
+    }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
