@@ -12,6 +12,7 @@
 void set_relative_heading(float delta_rad);
 
 void control_loops_init(void);
+void zero_heading(void);
 void yaw_rate_loop(void);
 void heading_loop(void);
 void actuate_loop(void);
