@@ -46,7 +46,7 @@ void HAL_GPIO_EXTI_Callback_vl53l4cd(uint16_t n);
 /**
  * @brief Initialize VL53L4CD.
  *
- * @return Result of BMP3 API execution status.
+ * @return Result of VL53L4CD ULD status.
  * @retval == 0 -> Success.
  * @retval > 0  -> Warning.
  * @retval < 0  -> Error.
@@ -56,7 +56,7 @@ int8_t vl53l4cd_init(void);
 /**
  * @brief Start interrupt based ranging.
  *
- * @return Result of BMP3 API execution status.
+ * @return Result of VL53L4CD ULD status.
  * @retval == 0 -> Success.
  * @retval > 0  -> Warning.
  * @retval < 0  -> Error.
@@ -66,7 +66,7 @@ int8_t vl53l4cd_start(void);
 /**
  * @brief Stop interrupt based ranging.
  *
- * @return Result of BMP3 API execution status.
+ * @return Result of VL53L4CD ULD status.
  * @retval == 0 -> Success.
  * @retval > 0  -> Warning.
  * @retval < 0  -> Error.
