@@ -122,8 +122,6 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  HAL_Delay(2000);
-
   // Sensors.
   bno085_reset();
   bno085_init();
@@ -144,8 +142,7 @@ int main(void)
   scheduler_add_task(yaw_rate_task, 5);
 
   // TODO: controls bench testing.
-  set_zero_heading(); // Zero the local absolute heading.
-  set_absolute_heading(1.570796f);
+  set_relative_heading(1.570796f);
 
   // servo_command(1000);
   // servo_command(2000);

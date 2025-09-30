@@ -55,9 +55,9 @@ static float quat_to_yaw(void) {
 // Wrap to [-pi, pi].
 static float wrap_pi(float a) {
   while (a > M_PI)
-    a -= 2.0f * M_PI;
+    a -= 2.0f * (float)M_PI;
   while (a < -M_PI)
-    a += 2.0f * M_PI;
+    a += 2.0f * (float)M_PI;
   return a;
 }
 
@@ -89,10 +89,10 @@ void actuate(void) {
     h_bridge_1_command(GPIO_PIN_RESET, GPIO_PIN_RESET, 0);
     h_bridge_2_command(GPIO_PIN_RESET, GPIO_PIN_RESET, 0);
   } else {
-    GPIO_PinState pin_1_a_state = forward ? GPIO_PIN_RESET : GPIO_PIN_SET;
-    GPIO_PinState pin_1_b_state = forward ? GPIO_PIN_SET : GPIO_PIN_RESET;
-    GPIO_PinState pin_2_a_state = forward ? GPIO_PIN_SET : GPIO_PIN_RESET;
-    GPIO_PinState pin_2_b_state = forward ? GPIO_PIN_RESET : GPIO_PIN_SET;
+    const GPIO_PinState pin_1_a_state = forward ? GPIO_PIN_RESET : GPIO_PIN_SET;
+    const GPIO_PinState pin_1_b_state = forward ? GPIO_PIN_SET : GPIO_PIN_RESET;
+    const GPIO_PinState pin_2_a_state = forward ? GPIO_PIN_SET : GPIO_PIN_RESET;
+    const GPIO_PinState pin_2_b_state = forward ? GPIO_PIN_RESET : GPIO_PIN_SET;
     h_bridge_1_command(pin_1_a_state, pin_1_b_state, duty);
     h_bridge_2_command(pin_2_a_state, pin_2_b_state, duty);
   }
@@ -100,18 +100,10 @@ void actuate(void) {
 
 /** Public functions. *********************************************************/
 
-// Set the current heading to the zero point.
-void set_zero_heading(void) { yaw_zero_world = quat_to_yaw(); }
-
 // Set a heading from the current heading.
 void set_relative_heading(const float delta_rad) {
   const float yaw_now = quat_to_yaw();
   heading_setpoint_rad = yaw_now + wrap_pi(delta_rad);
-}
-
-// Set a heading relative to zeroed local frame.
-void set_absolute_heading(const float psi_local_rad) {
-  heading_setpoint_rad = yaw_zero_world + wrap_pi(psi_local_rad);
 }
 
 // Initialization.
@@ -120,7 +112,7 @@ void control_loops_init(void) {
   pid_init(&heading_pid_controller);
   heading_pid_controller.k_p = 2.0f;
   heading_pid_controller.k_i = 0.0f;
-  heading_pid_controller.k_d = 0.02f;
+  heading_pid_controller.k_d = 0.0f;
   heading_pid_controller.tau = 0.1f;
   heading_pid_controller.T = 0.010f;
   heading_pid_controller.output_min = -2.5f;
@@ -130,9 +122,9 @@ void control_loops_init(void) {
 
   // Inner loop.
   pid_init(&yaw_rate_pid_controller);
-  yaw_rate_pid_controller.k_p = 0.08f;
-  yaw_rate_pid_controller.k_i = 0.50f;
-  yaw_rate_pid_controller.k_d = 0.001f;
+  yaw_rate_pid_controller.k_p = 0.1f;
+  yaw_rate_pid_controller.k_i = 0.0f;
+  yaw_rate_pid_controller.k_d = 0.0f;
   yaw_rate_pid_controller.tau = 0.02f;
   yaw_rate_pid_controller.T = 0.005f;
   yaw_rate_pid_controller.output_min = -1.0f;

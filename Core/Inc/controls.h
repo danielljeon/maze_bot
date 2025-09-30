@@ -9,9 +9,7 @@
 
 /** Public functions. *********************************************************/
 
-void set_zero_heading(void);
 void set_relative_heading(float delta_rad);
-void set_absolute_heading(float psi_local_rad);
 
 void control_loops_init(void);
 void yaw_rate_loop(void);
