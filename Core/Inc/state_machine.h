@@ -7,10 +7,6 @@
 #ifndef MAZE_BOT__STATE_MACHINE_H
 #define MAZE_BOT__STATE_MACHINE_H
 
-/** Includes. *****************************************************************/
-
-#include <stdint.h>
-
 /** Public types. *************************************************************/
 
 typedef enum state_machine {
@@ -26,8 +22,6 @@ typedef enum state_machine {
 /** Public variables. *********************************************************/
 
 extern state_t bot_state;
-extern uint8_t angle_target_reach_count;
-extern uint16_t advance_reach_count;
 
 /** Public functions. *********************************************************/
 

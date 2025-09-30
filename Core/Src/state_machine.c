@@ -7,7 +7,6 @@
 /** Includes. *****************************************************************/
 
 #include "state_machine.h"
-#include "bno085_runner.h"
 #include "h_bridge_control.h"
 #include "servo_control.h"
 #include "stm32l4xx_hal.h"
@@ -15,9 +14,6 @@
 /** Public variables. *********************************************************/
 
 state_t bot_state = STATE_INIT;
-
-uint8_t angle_target_reach_count = 0;
-uint16_t advance_reach_count = 0;
 
 /** Private functions. *********************************************************/
 
