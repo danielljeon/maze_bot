@@ -36,24 +36,23 @@ typedef struct {
 
 extern sensor_config_t sensor_config[SH2_MAX_SENSOR_ID];
 
-extern float bno085_quaternion_i;
-extern float bno085_quaternion_j;
-extern float bno085_quaternion_k;
-extern float bno085_quaternion_real;
-extern float bno085_quaternion_accuracy_rad;
-extern float bno085_quaternion_accuracy_deg;
+extern float bno085_game_quaternion_i;
+extern float bno085_game_quaternion_j;
+extern float bno085_game_quaternion_k;
+extern float bno085_game_quaternion_real;
 extern float bno085_gyro_x;
 extern float bno085_gyro_y;
 extern float bno085_gyro_z;
-extern float bno085_accel_x;
-extern float bno085_accel_y;
-extern float bno085_accel_z;
-extern float bno085_lin_accel_x;
-extern float bno085_lin_accel_y;
-extern float bno085_lin_accel_z;
-extern float bno085_gravity_x;
-extern float bno085_gravity_y;
-extern float bno085_gravity_z;
+// TODO(Maze bot): Evaluate additional sensor needs.
+// extern float bno085_accel_x;
+// extern float bno085_accel_y;
+// extern float bno085_accel_z;
+// extern float bno085_lin_accel_x;
+// extern float bno085_lin_accel_y;
+// extern float bno085_lin_accel_z;
+// extern float bno085_gravity_x;
+// extern float bno085_gravity_y;
+// extern float bno085_gravity_z;
 
 /** Public functions. *********************************************************/
 

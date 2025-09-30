@@ -15,40 +15,42 @@
 
 /** Definitions. **************************************************************/
 
-#define MAX_PWM_DELTA 70
-#define TRUE_MIN_PWM 30
+// H-bridge motor control.
+#define MAX_PWM_DELTA 70 // TRUE_MIN_PWM + MAX_PWM_DELTA = real max PWM.
+#define TRUE_MIN_PWM 30  // Minimum PWM that actually moves the motors.
+
+// Command deadband (unitless; |turn_cmd| = [0,1]).
 #define TURN_COMMAND_DEADBAND 0.1f
 
 /** Private variables. ********************************************************/
 
 // Reference variables.
-volatile float yaw_zero_world = 0.0f; // Set local "zero" heading.
+static volatile float yaw_zero = 0.0f; // Set local "zero" heading.
 
 // Outer loop.
-static pid_controller_t heading_pid_controller; // Outer loop controller.
-volatile float heading_setpoint_rad = 0.0f;     // Input command.
+static pid_controller_t heading_pid_controller;    // Outer loop controller.
+static volatile float heading_setpoint_rad = 0.0f; // Input command.
 // Heading setpoint (absolute yaw, radians, ENU: +Z up, +yaw counterclockwise).
-volatile float yaw_meas = 0.0f;    // Input measurement.
-volatile float yaw_rate_sp = 0.0f; // Output, (rad/s).
+static volatile float yaw_rate_sp = 0.0f; // Output, (rad/s).
 
 // Inner loop.
 static pid_controller_t yaw_rate_pid_controller; // Inner loop controller.
 //yaw_rate_sp                   // Input command.
 //bno085_gyro_z                 // Input measurement.
-volatile float turn_cmd = 0.0f; // Output.
+static volatile float turn_cmd = 0.0f; // Output.
 
 /** Private functions. ********************************************************/
 
 // Convert quaternion (x=i, y=j, z=k, w=real) to yaw (Z-YX Euler, radians).
 static float quat_to_yaw(void) {
-  const float x = bno085_quaternion_i;
-  const float y = bno085_quaternion_j;
-  const float z = bno085_quaternion_k;
-  const float w = bno085_quaternion_real;
+  const float x = bno085_game_quaternion_i;
+  const float y = bno085_game_quaternion_j;
+  const float z = bno085_game_quaternion_k;
+  const float w = bno085_game_quaternion_real;
 
   // yaw = atan2(2(wz + xy), 1 - 2(y^2 + z^2)).
-  float s = 2.0f * (w * z + x * y);
-  float c = 1.0f - 2.0f * (y * y + z * z);
+  const float s = 2.0f * (w * z + x * y);
+  const float c = 1.0f - 2.0f * (y * y + z * z);
   return atan2f(s, c);
 }
 
@@ -61,10 +63,14 @@ static float wrap_pi(float a) {
   return a;
 }
 
-/** Private functions. ********************************************************/
+// "Game" yaw (arbitrary at boot; no magnetometer).
+static float yaw_game(void) { return quat_to_yaw(); }
+
+// Local yaw (relative to our chosen zero).
+static float yaw_local(void) { return wrap_pi(yaw_game() - yaw_zero); }
 
 // Inverse kinematics and motor control.
-void actuate(void) {
+static void actuate(void) {
   const float tc = turn_cmd;
 
   // Add deadband to command.
@@ -84,26 +90,24 @@ void actuate(void) {
   // Duty is now [TRUE_MIN_PWM, TRUE_MIN_PWM + MAX_PWM_DELTA].
   const uint16_t duty = (uint16_t)(TRUE_MIN_PWM + pwm_delta);
 
-  // Direction pins.
-  if (duty == 0) {
-    h_bridge_1_command(GPIO_PIN_RESET, GPIO_PIN_RESET, 0);
-    h_bridge_2_command(GPIO_PIN_RESET, GPIO_PIN_RESET, 0);
-  } else {
-    const GPIO_PinState pin_1_a_state = forward ? GPIO_PIN_RESET : GPIO_PIN_SET;
-    const GPIO_PinState pin_1_b_state = forward ? GPIO_PIN_SET : GPIO_PIN_RESET;
-    const GPIO_PinState pin_2_a_state = forward ? GPIO_PIN_SET : GPIO_PIN_RESET;
-    const GPIO_PinState pin_2_b_state = forward ? GPIO_PIN_RESET : GPIO_PIN_SET;
-    h_bridge_1_command(pin_1_a_state, pin_1_b_state, duty);
-    h_bridge_2_command(pin_2_a_state, pin_2_b_state, duty);
-  }
+  // Differential turn-in-place (motors oppose).
+  const GPIO_PinState pin_1_a_state = forward ? GPIO_PIN_RESET : GPIO_PIN_SET;
+  const GPIO_PinState pin_1_b_state = forward ? GPIO_PIN_SET : GPIO_PIN_RESET;
+  const GPIO_PinState pin_2_a_state = forward ? GPIO_PIN_SET : GPIO_PIN_RESET;
+  const GPIO_PinState pin_2_b_state = forward ? GPIO_PIN_RESET : GPIO_PIN_SET;
+
+  h_bridge_1_command(pin_1_a_state, pin_1_b_state, duty);
+  h_bridge_2_command(pin_2_a_state, pin_2_b_state, duty);
 }
 
 /** Public functions. *********************************************************/
 
-// Set a heading from the current heading.
+void zero_heading(void) { yaw_zero = yaw_game(); }
+
+// Relative heading from current local yaw.
 void set_relative_heading(const float delta_rad) {
-  const float yaw_now = quat_to_yaw();
-  heading_setpoint_rad = yaw_now + wrap_pi(delta_rad);
+  const float yaw_now_local = yaw_local();
+  heading_setpoint_rad = wrap_pi(yaw_now_local + delta_rad);
 }
 
 // Initialization.
@@ -135,14 +139,14 @@ void control_loops_init(void) {
 
 // Outer loop.
 void heading_loop(void) {
-  // Measure current yaw from quaternion (world frame).
-  yaw_meas = quat_to_yaw();
+  const float yaw_meas_local = yaw_local();
 
-  // Choose nearest equivalent of the stored world-frame setpoint.
-  const float err = wrap_pi(heading_setpoint_rad - yaw_meas);
-  const float sp_closest = yaw_meas + err;
+  // Choose nearest equivalent of setpoint to avoid wrap jumps.
+  const float err = wrap_pi(heading_setpoint_rad - yaw_meas_local);
+  const float sp_closest_local = yaw_meas_local + err;
 
-  yaw_rate_sp = pid_update(&heading_pid_controller, sp_closest, yaw_meas);
+  yaw_rate_sp =
+      pid_update(&heading_pid_controller, sp_closest_local, yaw_meas_local);
 }
 
 // Inner loop.

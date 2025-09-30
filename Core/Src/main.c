@@ -142,7 +142,8 @@ int main(void)
   scheduler_add_task(yaw_rate_task, 5);
 
   // TODO: controls bench testing.
-  set_relative_heading(1.570796f);
+  zero_heading();
+  set_relative_heading(0);
 
   // servo_command(1000);
   // servo_command(2000);
