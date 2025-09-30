@@ -91,10 +91,10 @@ static void actuate(void) {
   const uint16_t duty = (uint16_t)(TRUE_MIN_PWM + pwm_delta);
 
   // Differential turn-in-place (motors oppose).
-  const GPIO_PinState pin_1_a_state = forward ? GPIO_PIN_RESET : GPIO_PIN_SET;
-  const GPIO_PinState pin_1_b_state = forward ? GPIO_PIN_SET : GPIO_PIN_RESET;
-  const GPIO_PinState pin_2_a_state = forward ? GPIO_PIN_SET : GPIO_PIN_RESET;
-  const GPIO_PinState pin_2_b_state = forward ? GPIO_PIN_RESET : GPIO_PIN_SET;
+  const GPIO_PinState pin_1_a_state = forward ? GPIO_PIN_SET : GPIO_PIN_RESET;
+  const GPIO_PinState pin_1_b_state = forward ? GPIO_PIN_RESET : GPIO_PIN_SET;
+  const GPIO_PinState pin_2_a_state = forward ? GPIO_PIN_RESET : GPIO_PIN_SET;
+  const GPIO_PinState pin_2_b_state = forward ? GPIO_PIN_SET : GPIO_PIN_RESET;
 
   h_bridge_1_command(pin_1_a_state, pin_1_b_state, duty);
   h_bridge_2_command(pin_2_a_state, pin_2_b_state, duty);
@@ -126,7 +126,7 @@ void control_loops_init(void) {
 
   // Inner loop.
   pid_init(&yaw_rate_pid_controller);
-  yaw_rate_pid_controller.k_p = 0.1f;
+  yaw_rate_pid_controller.k_p = 0.35f;
   yaw_rate_pid_controller.k_i = 0.0f;
   yaw_rate_pid_controller.k_d = 0.0f;
   yaw_rate_pid_controller.tau = 0.02f;
