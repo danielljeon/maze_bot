@@ -13,7 +13,7 @@
 #include "VL53L4CD_calibration.h"
 #include "platform.h"
 
-/** Definitions. **************************************************************/
+/** STM32 port and pin configs. ***********************************************/
 
 // GPIO for XSHUT.
 #define VL53L4CD_XSHUT_PORT GPIOB
@@ -22,6 +22,8 @@
 // GPIO for GPIO1 (interrupt).
 #define VL53L4CD_INT_PORT GPIOB
 #define VL53L4CD_INT_PIN GPIO_PIN_4
+
+/** Definitions. **************************************************************/
 
 #define VL53L4CD_SENSOR_ID 0xEBAA
 #define VL53L4CD_DEVICE_ADDRESS 0x52 // 8-bit, 0x29 for 7-bit address.

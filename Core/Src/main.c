@@ -22,11 +22,12 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "bno085_runner.h"
-#include "h_bridge_control.h"
-#include "servo_control.h"
-#include "scheduler.h"
-#include "vl53l4cd_runner.h"
 #include "controls.h"
+#include "h_bridge_control.h"
+#include "scheduler.h"
+#include "servo_control.h"
+#include "state_machine.h"
+#include "vl53l4cd_runner.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -122,6 +123,8 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  HAL_Delay(2000);
+
   // Sensors.
   bno085_reset();
   bno085_init();
@@ -135,20 +138,20 @@ int main(void)
   // Initialize control loops.
   control_loops_init();
 
-  scheduler_init(); // Initialize scheduler.
+  // Initialize scheduler.
+  scheduler_init();
   void (*heading_task)(void) = heading_loop;
   void (*yaw_rate_task)(void) = yaw_rate_loop;
+  void (*run_state_machine_task)(void) = run_state_machine;
+  void (*drive_task)(void) = drive;
   scheduler_add_task(heading_task, 10);
   scheduler_add_task(yaw_rate_task, 5);
+  scheduler_add_task(run_state_machine_task, 10);
+  scheduler_add_task(drive_task, 2);
 
   // TODO: controls bench testing.
   zero_heading();
   set_relative_heading(0);
-
-  // servo_command(1000);
-  // servo_command(2000);
-  // h_bridge_1_command(GPIO_PIN_RESET, GPIO_PIN_SET, 80);
-  // h_bridge_2_command(GPIO_PIN_RESET, GPIO_PIN_SET, 80);
 
   while (1) {
     scheduler_run();

@@ -8,16 +8,11 @@
 
 #include "controls.h"
 #include "bno085_runner.h"
-#include "h_bridge_control.h"
+#include "drive.h"
 #include "pid.h"
-#include "stm32l4xx_hal_gpio.h"
 #include <math.h>
 
 /** Definitions. **************************************************************/
-
-// H-bridge motor control.
-#define MAX_PWM_DELTA 70 // TRUE_MIN_PWM + MAX_PWM_DELTA = real max PWM.
-#define TRUE_MIN_PWM 30  // Minimum PWM that actually moves the motors.
 
 // Command deadband (unitless; |turn_cmd| = [0,1]).
 #define TURN_COMMAND_DEADBAND 0.1f
@@ -75,29 +70,13 @@ static void actuate(void) {
 
   // Add deadband to command.
   if (fabsf(tc) < TURN_COMMAND_DEADBAND) {
-    h_bridge_1_command(GPIO_PIN_RESET, GPIO_PIN_RESET, 0);
-    h_bridge_2_command(GPIO_PIN_RESET, GPIO_PIN_RESET, 0);
+    h_bridge_1_yaw_control = 0;
+    h_bridge_2_yaw_control = 0;
     return;
   }
 
-  // Direction from sign, magnitude from |turn_cmd|.
-  const int forward = tc > 0.0f;
-
-  // Scale |turn_cmd| [0,1] -> delta [0, MAX_PWM_DELTA].
-  const int pwm_delta =
-      (int)lroundf(fminf(fabsf(tc), 1.0f) * (float)MAX_PWM_DELTA);
-
-  // Duty is now [TRUE_MIN_PWM, TRUE_MIN_PWM + MAX_PWM_DELTA].
-  const uint16_t duty = (uint16_t)(TRUE_MIN_PWM + pwm_delta);
-
-  // Differential turn-in-place (motors oppose).
-  const GPIO_PinState pin_1_a_state = forward ? GPIO_PIN_SET : GPIO_PIN_RESET;
-  const GPIO_PinState pin_1_b_state = forward ? GPIO_PIN_RESET : GPIO_PIN_SET;
-  const GPIO_PinState pin_2_a_state = forward ? GPIO_PIN_RESET : GPIO_PIN_SET;
-  const GPIO_PinState pin_2_b_state = forward ? GPIO_PIN_SET : GPIO_PIN_RESET;
-
-  h_bridge_1_command(pin_1_a_state, pin_1_b_state, duty);
-  h_bridge_2_command(pin_2_a_state, pin_2_b_state, duty);
+  h_bridge_1_yaw_control = TURN_SIGN_POSITIVE_LEFT ? tc : -tc;
+  h_bridge_2_yaw_control = TURN_SIGN_POSITIVE_LEFT ? -tc : tc;
 }
 
 /** Public functions. *********************************************************/
