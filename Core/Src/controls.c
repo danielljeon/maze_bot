@@ -10,7 +10,14 @@
 #include "bno085_runner.h"
 #include "h_bridge_control.h"
 #include "pid.h"
+#include "stm32l4xx_hal_gpio.h"
 #include <math.h>
+
+/** Definitions. **************************************************************/
+
+#define MAX_PWM_DELTA 70
+#define TRUE_MIN_PWM 30
+#define TURN_COMMAND_DEADBAND 0.1f
 
 /** Private variables. ********************************************************/
 
@@ -58,31 +65,37 @@ static float wrap_pi(float a) {
 
 // Inverse kinematics and motor control.
 void actuate(void) {
-  // TODO FORWARD DIRECTION COMMAND KINEMATICS
-  // const float left  = forward_cmd - turn_cmd;
-  // const float right = forward_cmd + turn_cmd;
+  const float tc = turn_cmd;
 
-  // TODO SCALE COMMANDS AND DIRECTION
-  const uint16_t pwm = (uint16_t)fabsf(turn_cmd * 1000 + 1000);
-
-  GPIO_PinState pin_1_a_state;
-  GPIO_PinState pin_1_b_state;
-  GPIO_PinState pin_2_a_state;
-  GPIO_PinState pin_2_b_state;
-  if (pwm > 0) {
-    pin_1_a_state = GPIO_PIN_RESET;
-    pin_1_b_state = GPIO_PIN_SET;
-    pin_2_a_state = GPIO_PIN_SET;
-    pin_2_b_state = GPIO_PIN_RESET;
-  } else {
-    pin_1_a_state = GPIO_PIN_SET;
-    pin_1_b_state = GPIO_PIN_RESET;
-    pin_2_a_state = GPIO_PIN_RESET;
-    pin_2_b_state = GPIO_PIN_SET;
+  // Add deadband to command.
+  if (fabsf(tc) < TURN_COMMAND_DEADBAND) {
+    h_bridge_1_command(GPIO_PIN_RESET, GPIO_PIN_RESET, 0);
+    h_bridge_2_command(GPIO_PIN_RESET, GPIO_PIN_RESET, 0);
+    return;
   }
 
-  h_bridge_1_command(pin_1_a_state, pin_1_b_state, pwm);
-  h_bridge_2_command(pin_2_a_state, pin_2_b_state, pwm);
+  // Direction from sign, magnitude from |turn_cmd|.
+  const int forward = tc > 0.0f;
+
+  // Scale |turn_cmd| [0,1] -> delta [0, MAX_PWM_DELTA].
+  const int pwm_delta =
+      (int)lroundf(fminf(fabsf(tc), 1.0f) * (float)MAX_PWM_DELTA);
+
+  // Duty is now [TRUE_MIN_PWM, TRUE_MIN_PWM + MAX_PWM_DELTA].
+  const uint16_t duty = (uint16_t)(TRUE_MIN_PWM + pwm_delta);
+
+  // Direction pins.
+  if (duty == 0) {
+    h_bridge_1_command(GPIO_PIN_RESET, GPIO_PIN_RESET, 0);
+    h_bridge_2_command(GPIO_PIN_RESET, GPIO_PIN_RESET, 0);
+  } else {
+    GPIO_PinState pin_1_a_state = forward ? GPIO_PIN_RESET : GPIO_PIN_SET;
+    GPIO_PinState pin_1_b_state = forward ? GPIO_PIN_SET : GPIO_PIN_RESET;
+    GPIO_PinState pin_2_a_state = forward ? GPIO_PIN_SET : GPIO_PIN_RESET;
+    GPIO_PinState pin_2_b_state = forward ? GPIO_PIN_RESET : GPIO_PIN_SET;
+    h_bridge_1_command(pin_1_a_state, pin_1_b_state, duty);
+    h_bridge_2_command(pin_2_a_state, pin_2_b_state, duty);
+  }
 }
 
 /** Public functions. *********************************************************/
