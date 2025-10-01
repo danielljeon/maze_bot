@@ -37,7 +37,7 @@ state_t playbook[PLAYBOOK_COUNT] = {
 // Align secondary state based arrays to match state playbook_index.
 static float turns[PLAYBOOK_COUNT] = {0, 0, 0.45f, 0, 0, 0}; // Radians.
 static uint16_t advance_counter_limits[PLAYBOOK_COUNT] = {0, 0, 0, 875, 0, 0};
-uint16_t current_advance_counter = 0;
+static uint16_t current_advance_counter = 0;
 
 /** Public variables. *********************************************************/
 
