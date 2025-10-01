@@ -18,12 +18,30 @@
 
 /** Private variables. ********************************************************/
 
-static uint16_t state_advance_counter = 0;
 static uint16_t state_standby_counter = 0;
+
+/** Definitions. **************************************************************/
+
+#define PLAYBOOK_COUNT 6
+#define INITIAL_STATE STATE_INIT
+
+/** Private variables. ********************************************************/
+
+// State machine playbook.
+uint8_t playbook_index = 0;
+state_t playbook[PLAYBOOK_COUNT] = {
+    INITIAL_STATE, STATE_STANDBY,      STATE_TURN,
+    STATE_ADVANCE, STATE_DROP_PACKAGE, STATE_IDLE,
+};
+
+// Align secondary state based arrays to match state playbook_index.
+static float turns[PLAYBOOK_COUNT] = {0, 0.45f, 0, 0, 0, 0}; // Radians.
+static uint16_t advance_counter_limits[PLAYBOOK_COUNT] = {0, 0, 0, 200, 0, 0};
+uint16_t current_advance_counter = 0;
 
 /** Public variables. *********************************************************/
 
-state_t bot_state = STATE_INIT;
+state_t bot_state = INITIAL_STATE;
 
 /** Private functions. *********************************************************/
 
@@ -42,6 +60,17 @@ static void init(void) {
   pickup_package();
 }
 
+static void next_state(void) {
+  playbook_index += 1;
+
+  // Clamp the playbook for safety in case of overrun.
+  if (playbook_index >= PLAYBOOK_COUNT) {
+    bot_state = STATE_IDLE;
+  } else {
+    bot_state = playbook[playbook_index]; // Increment playbook.
+  }
+}
+
 /** Public functions. *********************************************************/
 
 // TODO(Maze bot): CURRENTLY HAS HARDCODED OVERRIDES.
@@ -49,7 +78,9 @@ void run_state_machine(void) {
   switch (bot_state) {
   case STATE_IDLE:
     idle();
+    // TODO: SHOULD ADD A CASCADED STATE BASED PID HEADING CONTROL DISABLEMENT.
     break;
+
   case STATE_INIT:
     init();
 
@@ -57,8 +88,9 @@ void run_state_machine(void) {
     vl53l4cd_init();
     vl53l4cd_start();
 
-    bot_state = STATE_STANDBY;
+    next_state();
     break;
+
   case STATE_STANDBY:
     if (state_standby_counter > 10) {
       // Stop the VL53L4CD.
@@ -71,40 +103,50 @@ void run_state_machine(void) {
       // Initialize startup controls.
       zero_heading();
 
-      bot_state = STATE_TURN;
+      next_state();
 
     } else if (distance_mm > 100) {
       state_standby_counter++;
     }
 
     break;
+
   case STATE_MOMENTARY_SENSE:
     break;
+
   case STATE_TURN:
 
-    set_relative_heading(0.45f);
+    set_relative_heading(turns[state_standby_counter]);
 
-    bot_state = STATE_ADVANCE;
+    next_state();
     break;
+
   case STATE_ADVANCE:
-    if (state_advance_counter > 200) {
+    if (current_advance_counter > advance_counter_limits[playbook_index]) {
       h_bridge_linear = 0.0f;
-      bot_state = STATE_DROP_PACKAGE;
+
+      next_state();
+      current_advance_counter = 0; // Clear for next STATE_ADVANCE entrance.
 
     } else {
       h_bridge_linear = 0.01f;
-      state_advance_counter++;
+      current_advance_counter++;
     }
 
     break;
+
   case STATE_PICKUP_PACKAGE:
     pickup_package();
+
+    next_state();
     break;
+
   case STATE_DROP_PACKAGE:
     drop_package();
 
-    bot_state = STATE_IDLE;
+    next_state();
     break;
+
   default:
     break;
   }
