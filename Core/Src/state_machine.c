@@ -116,7 +116,7 @@ void run_state_machine(void) {
 
   case STATE_TURN:
 
-    set_relative_heading(turns[state_standby_counter]);
+    set_relative_heading(turns[playbook_index]);
 
     next_state();
     break;
