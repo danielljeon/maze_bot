@@ -1,6 +1,6 @@
 # maze_bot
 
-![arm_gcc_build](https://github.com/scalpelspace/maze_bot/actions/workflows/arm_gcc_build.yaml/badge.svg)
+![arm_gcc_build](https://github.com/danielljeon/maze_bot/actions/workflows/arm_gcc_build.yaml/badge.svg)
 
 Terrain and maze solving robot for mechatronics design university course (firmware).
 
