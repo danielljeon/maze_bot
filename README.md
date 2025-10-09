@@ -75,7 +75,7 @@ Terrain and maze solving robot for mechatronics design university course (firmwa
 | PA11        | `GPIO_Output`           |                                | TB6612FNG Board Pin x: `DIR_A1`  |                           |
 | PA12        | `GPIO_Output`           |                                | TB6612FNG Board Pin x: `DIR_A2`  |                           |
 | PA0         | `GPIO_Output`           |                                | TB6612FNG Board Pin x: `DIR_B1`  |                           |
-| PB10        | `GPIO_Output`           |                                | TB6612FNG Board Pin x: `DIR_B2`  |                           |
+| PA10        | `GPIO_Output`           |                                | TB6612FNG Board Pin x: `DIR_B2`  |                           |
 | PA2         | `TIM15_CH1`             | PWM output                     | Hobby Servo Pin x: `PWM`         |                           |
 
 </details>
