@@ -24,6 +24,10 @@ Terrain and maze solving robot for mechatronics design university course (firmwa
 
 ## 1 Overview
 
+|                 Heading Control                  |
+|:------------------------------------------------:|
+| ![heading_control.gif](docs/heading_control.gif) |
+
 ### 1.1 Bill of Materials (BOM)
 
 | Manufacturer Part Number | Manufacturer                         | Description                    | Quantity | Notes |
