@@ -25,7 +25,6 @@
 #include "bno085_runner.h"
 #include "controls.h"
 #include "h_bridge_control.h"
-#include "scheduler.h"
 #include "servo_control.h"
 #include "state_machine.h"
 #include "vl53l4cd_runner.h"
@@ -66,7 +65,35 @@ osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
   .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityHigh,
+};
+/* Definitions for headingTask */
+osThreadId_t headingTaskHandle;
+const osThreadAttr_t headingTask_attributes = {
+  .name = "headingTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityAboveNormal,
+};
+/* Definitions for yawRateTask */
+osThreadId_t yawRateTaskHandle;
+const osThreadAttr_t yawRateTask_attributes = {
+  .name = "yawRateTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityRealtime,
+};
+/* Definitions for driveTask */
+osThreadId_t driveTaskHandle;
+const osThreadAttr_t driveTask_attributes = {
+  .name = "driveTask",
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for stateMacTask */
+osThreadId_t stateMacTaskHandle;
+const osThreadAttr_t stateMacTask_attributes = {
+  .name = "stateMacTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityBelowNormal,
 };
 /* USER CODE BEGIN PV */
 
@@ -82,6 +109,10 @@ static void MX_TIM1_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM15_Init(void);
 void StartDefaultTask(void *argument);
+void StartHeadingTask(void *argument);
+void StartYawRateTask(void *argument);
+void StartDriveTask(void *argument);
+void StartStateMachineTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -129,6 +160,13 @@ int main(void)
   MX_TIM15_Init();
   /* USER CODE BEGIN 2 */
 
+  // Initialize motor drivers.
+  servo_command_init();
+  h_bridge_command_init();
+
+  // Initialize control loops.
+  control_loops_init();
+
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -154,6 +192,18 @@ int main(void)
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
+  /* creation of headingTask */
+  headingTaskHandle = osThreadNew(StartHeadingTask, NULL, &headingTask_attributes);
+
+  /* creation of yawRateTask */
+  yawRateTaskHandle = osThreadNew(StartYawRateTask, NULL, &yawRateTask_attributes);
+
+  /* creation of driveTask */
+  driveTaskHandle = osThreadNew(StartDriveTask, NULL, &driveTask_attributes);
+
+  /* creation of stateMacTask */
+  stateMacTaskHandle = osThreadNew(StartStateMachineTask, NULL, &stateMacTask_attributes);
+
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -169,32 +219,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  HAL_Delay(5000);
-
-  // Initialize motor drivers.
-  servo_command_init();
-  h_bridge_command_init();
-
-  // Initialize control loops.
-  control_loops_init();
-
-  // Initialize scheduler.
-  scheduler_init();
-  void (*heading_task)(void) = heading_loop;
-  void (*yaw_rate_task)(void) = yaw_rate_loop;
-  void (*run_state_machine_task)(void) = run_state_machine;
-  void (*drive_task)(void) = drive;
-  scheduler_add_task(heading_task, 10);
-  scheduler_add_task(yaw_rate_task, 5);
-  scheduler_add_task(run_state_machine_task, 10);
-  scheduler_add_task(drive_task, 2);
-
   while (1) {
-    scheduler_run();
-
-    if (bot_state != STATE_STANDBY) {
-      bno085_run(); // BNO085 process.
-    }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -638,11 +663,85 @@ void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
-  for(;;)
-  {
+  for (;;) {
+    if (bot_state != STATE_STANDBY) {
+      bno085_run(); // BNO085 process.
+    }
     osDelay(1);
   }
   /* USER CODE END 5 */
+}
+
+/* USER CODE BEGIN Header_StartHeadingTask */
+/**
+* @brief Function implementing the headingTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartHeadingTask */
+void StartHeadingTask(void *argument)
+{
+  /* USER CODE BEGIN StartHeadingTask */
+  /* Infinite loop */
+  for (;;) {
+    heading_loop();
+    osDelay(10);
+  }
+  /* USER CODE END StartHeadingTask */
+}
+
+/* USER CODE BEGIN Header_StartYawRateTask */
+/**
+* @brief Function implementing the yawRateTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartYawRateTask */
+void StartYawRateTask(void *argument)
+{
+  /* USER CODE BEGIN StartYawRateTask */
+  /* Infinite loop */
+  for (;;) {
+    yaw_rate_loop();
+    osDelay(5);
+  }
+  /* USER CODE END StartYawRateTask */
+}
+
+/* USER CODE BEGIN Header_StartDriveTask */
+/**
+* @brief Function implementing the driveTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartDriveTask */
+void StartDriveTask(void *argument)
+{
+  /* USER CODE BEGIN StartDriveTask */
+  /* Infinite loop */
+  for (;;) {
+    drive();
+    osDelay(2);
+  }
+  /* USER CODE END StartDriveTask */
+}
+
+/* USER CODE BEGIN Header_StartStateMachineTask */
+/**
+* @brief Function implementing the stateMacTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartStateMachineTask */
+void StartStateMachineTask(void *argument)
+{
+  /* USER CODE BEGIN StartStateMachineTask */
+  /* Infinite loop */
+  for (;;) {
+    run_state_machine();
+    osDelay(10);
+  }
+  /* USER CODE END StartStateMachineTask */
 }
 
 /**

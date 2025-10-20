@@ -16,6 +16,7 @@ Terrain and maze solving robot for mechatronics design university course (firmwa
     * [1.2 Block Diagram](#12-block-diagram)
     * [1.3 Pin Configurations](#13-pin-configurations)
     * [1.4 Clock Configurations](#14-clock-configurations)
+  * [2 FreeRTOS](#2-freertos)
 <!-- TOC -->
 
 </details>
@@ -98,3 +99,10 @@ Phase-Locked Loop Main (PLLM)
  → 80 MHz APB1 (Maxed) → 80 MHz APB1 Timer
  → 80 MHz APB2 (Maxed) → 80 MHz APB2 Timer
 ```
+
+---
+
+## 2 FreeRTOS
+
+The `SYS` Timebase Source is set to `TIM16` in order to free `SysTick` for
+the FreeRTOS kernal. 
