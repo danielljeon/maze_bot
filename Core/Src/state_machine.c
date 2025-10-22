@@ -105,7 +105,7 @@ void run_state_machine(void) {
 
       next_state();
 
-    } else if (distance_mm > 100) {
+    } else if (vl53l4cd_distance_mm > 100) {
       state_standby_counter++;
     }
 

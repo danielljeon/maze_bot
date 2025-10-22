@@ -47,6 +47,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
+DMA_HandleTypeDef hdma_i2c1_rx;
 
 SPI_HandleTypeDef hspi1;
 DMA_HandleTypeDef hdma_spi1_rx;
@@ -60,12 +61,12 @@ DMA_HandleTypeDef hdma_tim1_ch1;
 DMA_HandleTypeDef hdma_tim1_ch2;
 DMA_HandleTypeDef hdma_tim15_ch1_up_trig_com;
 
-/* Definitions for defaultTask */
-osThreadId_t defaultTaskHandle;
-const osThreadAttr_t defaultTask_attributes = {
-  .name = "defaultTask",
+/* Definitions for imuTask */
+osThreadId_t imuTaskHandle;
+const osThreadAttr_t imuTask_attributes = {
+  .name = "imuTask",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityHigh,
+  .priority = (osPriority_t) osPriorityAboveNormal,
 };
 /* Definitions for headingTask */
 osThreadId_t headingTaskHandle;
@@ -95,6 +96,13 @@ const osThreadAttr_t stateMacTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityBelowNormal,
 };
+/* Definitions for tofTask */
+osThreadId_t tofTaskHandle;
+const osThreadAttr_t tofTask_attributes = {
+  .name = "tofTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityHigh,
+};
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -108,11 +116,12 @@ static void MX_TIM2_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM15_Init(void);
-void StartDefaultTask(void *argument);
+void StartIMUTask(void *argument);
 void StartHeadingTask(void *argument);
 void StartYawRateTask(void *argument);
 void StartDriveTask(void *argument);
 void StartStateMachineTask(void *argument);
+void StartTOFTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -160,6 +169,14 @@ int main(void)
   MX_TIM15_Init();
   /* USER CODE BEGIN 2 */
 
+  // Initialize and start the VL53L4CD.
+  vl53l4cd_init();
+  vl53l4cd_start();
+
+  // Initialize BNO085.
+  bno085_reset();
+  bno085_init();
+
   // Initialize motor drivers.
   servo_command_init();
   h_bridge_command_init();
@@ -189,8 +206,8 @@ int main(void)
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  /* creation of imuTask */
+  imuTaskHandle = osThreadNew(StartIMUTask, NULL, &imuTask_attributes);
 
   /* creation of headingTask */
   headingTaskHandle = osThreadNew(StartHeadingTask, NULL, &headingTask_attributes);
@@ -203,6 +220,9 @@ int main(void)
 
   /* creation of stateMacTask */
   stateMacTaskHandle = osThreadNew(StartStateMachineTask, NULL, &stateMacTask_attributes);
+
+  /* creation of tofTask */
+  tofTaskHandle = osThreadNew(StartTOFTask, NULL, &tofTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -574,11 +594,14 @@ static void MX_DMA_Init(void)
   /* DMA1_Channel6_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel6_IRQn);
+  /* DMA1_Channel7_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel7_IRQn, 3, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel7_IRQn);
   /* DMA2_Channel3_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Channel3_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(DMA2_Channel3_IRQn, 3, 0);
   HAL_NVIC_EnableIRQ(DMA2_Channel3_IRQn);
   /* DMA2_Channel4_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Channel4_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(DMA2_Channel4_IRQn, 3, 0);
   HAL_NVIC_EnableIRQ(DMA2_Channel4_IRQn);
 
 }
@@ -637,10 +660,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI0_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 2, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
-  HAL_NVIC_SetPriority(EXTI4_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 2, 0);
   HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
@@ -652,21 +675,19 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_StartDefaultTask */
+/* USER CODE BEGIN Header_StartIMUTask */
 /**
-  * @brief  Function implementing the defaultTask thread.
+  * @brief  Function implementing the imuTask thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument)
+/* USER CODE END Header_StartIMUTask */
+void StartIMUTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
   for (;;) {
-    if (bot_state != STATE_STANDBY) {
-      bno085_run(); // BNO085 process.
-    }
+    bno085_run(); // BNO085 process.
     osDelay(1);
   }
   /* USER CODE END 5 */
@@ -742,6 +763,25 @@ void StartStateMachineTask(void *argument)
     osDelay(10);
   }
   /* USER CODE END StartStateMachineTask */
+}
+
+/* USER CODE BEGIN Header_StartTOFTask */
+/**
+* @brief Function implementing the tofTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTOFTask */
+void StartTOFTask(void *argument)
+{
+  /* USER CODE BEGIN StartTOFTask */
+  /* Infinite loop */
+  for(;;)
+  {
+    vl53l4cd_process_dma();
+    osDelay(100);
+  }
+  /* USER CODE END StartTOFTask */
 }
 
 /**

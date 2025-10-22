@@ -24,3 +24,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t n) {
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
   HAL_SPI_TxRxCpltCallback_sh2(hspi);
 }
+
+/** I2C. */
+
+void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c) {
+  HAL_I2C_MemRxCpltCallback_vl53l4cd(hi2c);
+}
