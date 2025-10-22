@@ -109,9 +109,6 @@ void HAL_GPIO_EXTI_Callback_vl53l4cd(uint16_t n) {
 void HAL_I2C_MemRxCpltCallback_vl53l4cd(I2C_HandleTypeDef *hi2c) {
   if (hi2c == &VL53L4CD_HI2C && i2c_dma_state == I2C_DATA_RX_PENDING) {
     i2c_dma_state = I2C_DATA_RX_LOADED;
-
-    // Clear interrupt.
-    VL53L4CD_ClearInterrupt(vl53l4cd_dev);
   }
 }
 
@@ -122,10 +119,14 @@ int8_t vl53l4cd_init(void) {
 
   int8_t status = 0;
 
+  // Pulse XSHUT.
+  HAL_GPIO_WritePin(VL53L4CD_XSHUT_PORT, VL53L4CD_XSHUT_PIN, GPIO_PIN_RESET);
+  HAL_Delay(100);
+
   // Ensure XSHUT is high.
   HAL_GPIO_WritePin(VL53L4CD_XSHUT_PORT, VL53L4CD_XSHUT_PIN, GPIO_PIN_SET);
 
-  HAL_Delay(5);
+  HAL_Delay(25);
 
   // Get sensor ID.
   uint16_t sensor_id = 0;
