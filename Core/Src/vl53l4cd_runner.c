@@ -22,7 +22,7 @@ typedef enum i2c_dma_state_e {
 
 static Dev_t vl53l4cd_dev = VL53L4CD_DEVICE_ADDRESS;
 
-static i2c_dma_state_t i2c_dma_state = IDLE;
+static volatile i2c_dma_state_t i2c_dma_state = IDLE;
 
 // DMA RX array for VL53L4CD I2C read (16-bit).
 static uint8_t vl53l4cd_dma_rx_buffer[2] = {0};
@@ -179,8 +179,9 @@ void vl53l4cd_process_dma(void) {
   switch (i2c_dma_state) {
 
   case I2C_DATA_RX_REQUEST:
-    vl53l4cd_start_distance_dma(vl53l4cd_dev);
-    i2c_dma_state = I2C_DATA_RX_PENDING;
+    if (vl53l4cd_start_distance_dma(vl53l4cd_dev) == HAL_OK) {
+      i2c_dma_state = I2C_DATA_RX_PENDING;
+    }
     break;
 
   case I2C_DATA_RX_LOADED:
