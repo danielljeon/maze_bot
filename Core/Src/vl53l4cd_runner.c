@@ -109,9 +109,6 @@ void HAL_GPIO_EXTI_Callback_vl53l4cd(uint16_t n) {
 void HAL_I2C_MemRxCpltCallback_vl53l4cd(I2C_HandleTypeDef *hi2c) {
   if (hi2c == &VL53L4CD_HI2C && i2c_dma_state == I2C_DATA_RX_PENDING) {
     i2c_dma_state = I2C_DATA_RX_LOADED;
-
-    // Clear interrupt.
-    VL53L4CD_ClearInterrupt(vl53l4cd_dev);
   }
 }
 
