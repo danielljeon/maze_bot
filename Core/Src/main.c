@@ -47,6 +47,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
+DMA_HandleTypeDef hdma_i2c1_rx;
 
 SPI_HandleTypeDef hspi1;
 DMA_HandleTypeDef hdma_spi1_rx;
@@ -123,7 +124,13 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  HAL_Delay(5000);
+  // Initialize and start the VL53L4CD.
+  vl53l4cd_init();
+  vl53l4cd_start();
+
+  // Initialize BNO085.
+  bno085_reset();
+  bno085_init();
 
   // Initialize motor drivers.
   servo_command_init();
@@ -138,17 +145,17 @@ int main(void)
   void (*yaw_rate_task)(void) = yaw_rate_loop;
   void (*run_state_machine_task)(void) = run_state_machine;
   void (*drive_task)(void) = drive;
+  void (*tof_task)(void) = vl53l4cd_process_dma;
   scheduler_add_task(heading_task, 10);
   scheduler_add_task(yaw_rate_task, 5);
   scheduler_add_task(run_state_machine_task, 10);
   scheduler_add_task(drive_task, 2);
+  scheduler_add_task(tof_task, 100);
 
   while (1) {
     scheduler_run();
 
-    if (bot_state != STATE_STANDBY) {
-      bno085_run(); // BNO085 process.
-    }
+    bno085_run(); // BNO085 process.
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -503,6 +510,9 @@ static void MX_DMA_Init(void)
   /* DMA1_Channel6_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel6_IRQn);
+  /* DMA1_Channel7_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel7_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel7_IRQn);
   /* DMA2_Channel3_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Channel3_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Channel3_IRQn);

@@ -28,20 +28,24 @@
 #define VL53L4CD_SENSOR_ID 0xEBAA
 #define VL53L4CD_DEVICE_ADDRESS 0x52 // 8-bit, 0x29 for 7-bit address.
 
+#define VL53L4CD_USE_ONLY_DMA_DISTANCE // Define for only DMA (RX) utilization.
+
 /** Public variables. *********************************************************/
 
-extern uint8_t range_status;
-extern uint16_t distance_mm;
-extern uint32_t ambient_rate_kcps;
-extern uint32_t ambient_per_spad_kcps;
-extern uint32_t signal_rate_kcps;
-extern uint32_t signal_per_spad_kcps;
-extern uint16_t number_of_spad;
-extern uint16_t sigma_mm;
+extern uint8_t vl53l4cd_range_status;
+extern uint16_t vl53l4cd_distance_mm;
+extern uint32_t vl53l4cd_ambient_rate_kcps;
+extern uint32_t vl53l4cd_ambient_per_spad_kcps;
+extern uint32_t vl53l4cd_signal_rate_kcps;
+extern uint32_t vl53l4cd_signal_per_spad_kcps;
+extern uint16_t vl53l4cd_number_of_spad;
+extern uint16_t vl53l4cd_sigma_mm;
 
-/** User implementations into STM32 GPIO NVIC HAL. ****************************/
+/** User implementations into STM32 HAL (overwrite weak HAL functions). *******/
 
 void HAL_GPIO_EXTI_Callback_vl53l4cd(uint16_t n);
+
+void HAL_I2C_MemRxCpltCallback_vl53l4cd(I2C_HandleTypeDef *hi2c);
 
 /** Public functions. *********************************************************/
 
@@ -64,6 +68,11 @@ int8_t vl53l4cd_init(void);
  * @retval < 0  -> Error.
  */
 int8_t vl53l4cd_start(void);
+
+/**
+ * @brief Process the current DMA RX buffer.
+ */
+void vl53l4cd_process_dma(void);
 
 /**
  * @brief Stop interrupt based ranging.
