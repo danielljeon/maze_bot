@@ -8,7 +8,6 @@
 
 #include "state_machine.h"
 
-#include "bno085_runner.h"
 #include "controls.h"
 #include "drive.h"
 #include "h_bridge_control.h"
@@ -84,28 +83,17 @@ void run_state_machine(void) {
   case STATE_INIT:
     init();
 
-    // Initialize and start the VL53L4CD.
-    vl53l4cd_init();
-    vl53l4cd_start();
-
     next_state();
     break;
 
   case STATE_STANDBY:
     if (state_standby_counter > 10) {
-      // Stop the VL53L4CD.
-      vl53l4cd_stop();
-
-      // Initialize BNO085.
-      bno085_reset();
-      bno085_init();
-
       // Initialize startup controls.
       zero_heading();
 
       next_state();
 
-    } else if (distance_mm > 100) {
+    } else if (vl53l4cd_distance_mm > 100) {
       state_standby_counter++;
     }
 
