@@ -13,6 +13,7 @@
 typedef enum i2c_dma_state_e {
   IDLE,                       // VL53L4CD not yet configured.
   I2C_WAITING_DATA_READY_INT, // Awaiting next data ready call.
+  I2C_DATA_RX_REQUEST,        // Request DMA RX.
   I2C_DATA_RX_PENDING,        // Pending DMA RX arrival.
   I2C_DATA_RX_LOADED,         // Data arrived and loaded in DMA buffer.
 } i2c_dma_state_t;
@@ -25,6 +26,9 @@ static i2c_dma_state_t i2c_dma_state = IDLE;
 
 // DMA RX array for VL53L4CD I2C read (16-bit).
 static uint8_t vl53l4cd_dma_rx_buffer[2] = {0};
+
+// DMA TX array for VL53L4CD I2C read (16-bit + 8-bit).
+static uint8_t vl53l4cd_dma_tx_buffer[3] = {0};
 
 /** STM32 port and pin configs. ***********************************************/
 
@@ -53,9 +57,25 @@ uint16_t vl53l4cd_sigma_mm = 0;
  */
 
 /**
+ * @brief This function clears the interrupt using DMA (DMA version of
+ * VL53L4CD_ClearInterrupt from the ULD).
+ * @param dev : Device instance.
+ * @return (VL53L4CD_ERROR) status : 0 if OK.
+ */
+VL53L4CD_Error vl53l4cd_clear_interrupt_dma(Dev_t dev) {
+  VL53L4CD_Error status = VL53L4CD_ERROR_NONE;
+  vl53l4cd_dma_tx_buffer[0] = (VL53L4CD_SYSTEM__INTERRUPT_CLEAR >> 8) & 0xFF;
+  vl53l4cd_dma_tx_buffer[1] = (VL53L4CD_SYSTEM__INTERRUPT_CLEAR >> 0) & 0xFF;
+  vl53l4cd_dma_tx_buffer[2] = 0x01 & 0xFF;
+  status |= HAL_I2C_Master_Transmit_DMA(&hi2c1, dev, vl53l4cd_dma_tx_buffer, 3);
+
+  return status;
+}
+
+/**
  * @brief This function triggers the DMA read distance results from the sensor.
  * @param dev instance of selected VL53L4CD sensor.
- * @return (uint8_t) status : 0 if OK.
+ * @return (VL53L4CD_ERROR) status : 0 if OK.
  */
 VL53L4CD_Error vl53l4cd_start_distance_dma(Dev_t dev) {
   VL53L4CD_Error status = VL53L4CD_ERROR_NONE;
@@ -68,7 +88,7 @@ VL53L4CD_Error vl53l4cd_start_distance_dma(Dev_t dev) {
 /**
  * @brief This function gets the distance reported by the sensor stored by DMA.
  * @param p_result Pointer of structure, filled with the distance result.
- * @return (uint8_t) status : 0 if OK.
+ * @return (VL53L4CD_ERROR) status : 0 if OK.
  */
 VL53L4CD_Error vl53l4cd_get_distance_dma(VL53L4CD_ResultsData_t *p_result) {
   const uint16_t temp_16 = ((uint16_t)vl53l4cd_dma_rx_buffer[0] << 8) |
@@ -99,8 +119,7 @@ void HAL_GPIO_EXTI_Callback_vl53l4cd(uint16_t n) {
     VL53L4CD_ClearInterrupt(vl53l4cd_dev);
 #else
     if (i2c_dma_state == I2C_WAITING_DATA_READY_INT) {
-      i2c_dma_state = I2C_DATA_RX_PENDING;
-      vl53l4cd_start_distance_dma(vl53l4cd_dev);
+      i2c_dma_state = I2C_DATA_RX_REQUEST;
     }
 #endif
   }
@@ -112,6 +131,12 @@ void HAL_I2C_MemRxCpltCallback_vl53l4cd(I2C_HandleTypeDef *hi2c) {
   }
 }
 
+void HAL_I2C_MasterTxCpltCallback_vl53l4cd(I2C_HandleTypeDef *hi2c) {
+  if (hi2c == &VL53L4CD_HI2C) {
+    i2c_dma_state = I2C_WAITING_DATA_READY_INT;
+  }
+}
+
 /** Public functions. *********************************************************/
 
 int8_t vl53l4cd_init(void) {
@@ -119,14 +144,10 @@ int8_t vl53l4cd_init(void) {
 
   int8_t status = 0;
 
-  // Pulse XSHUT.
-  HAL_GPIO_WritePin(VL53L4CD_XSHUT_PORT, VL53L4CD_XSHUT_PIN, GPIO_PIN_RESET);
-  HAL_Delay(100);
-
   // Ensure XSHUT is high.
   HAL_GPIO_WritePin(VL53L4CD_XSHUT_PORT, VL53L4CD_XSHUT_PIN, GPIO_PIN_SET);
 
-  HAL_Delay(25);
+  HAL_Delay(5);
 
   // Get sensor ID.
   uint16_t sensor_id = 0;
@@ -153,10 +174,16 @@ int8_t vl53l4cd_start(void) {
 }
 
 void vl53l4cd_process_dma(void) {
-  if (i2c_dma_state == I2C_DATA_RX_LOADED) {
+  VL53L4CD_ResultsData_t data = {0};
 
-    VL53L4CD_ResultsData_t data = {0};
+  switch (i2c_dma_state) {
 
+  case I2C_DATA_RX_REQUEST:
+    vl53l4cd_start_distance_dma(vl53l4cd_dev);
+    i2c_dma_state = I2C_DATA_RX_PENDING;
+    break;
+
+  case I2C_DATA_RX_LOADED:
     vl53l4cd_get_distance_dma(&data); // DMA based distance only update.
 
     vl53l4cd_range_status = data.range_status;
@@ -168,10 +195,13 @@ void vl53l4cd_process_dma(void) {
     vl53l4cd_number_of_spad = data.number_of_spad;
     vl53l4cd_sigma_mm = data.sigma_mm;
 
+    // Clear interrupt and reset state machine.
+    vl53l4cd_clear_interrupt_dma(vl53l4cd_dev);
     i2c_dma_state = I2C_WAITING_DATA_READY_INT;
+    break;
 
-    // Clear interrupt.
-    VL53L4CD_ClearInterrupt(vl53l4cd_dev);
+  default:
+    break;
   }
 }
 
