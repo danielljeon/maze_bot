@@ -47,6 +47,8 @@ void HAL_GPIO_EXTI_Callback_vl53l4cd(uint16_t n);
 
 void HAL_I2C_MemRxCpltCallback_vl53l4cd(I2C_HandleTypeDef *hi2c);
 
+void HAL_I2C_MasterTxCpltCallback_vl53l4cd(I2C_HandleTypeDef *hi2c);
+
 /** Public functions. *********************************************************/
 
 /**
@@ -71,6 +73,11 @@ int8_t vl53l4cd_start(void);
 
 /**
  * @brief Process the current DMA RX buffer.
+ *
+ * @return Result of VL53L4CD ULD status.
+ * @retval == 0 -> Success.
+ * @retval > 0  -> Warning.
+ * @retval < 0  -> Error.
  */
 void vl53l4cd_process_dma(void);
 

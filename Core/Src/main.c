@@ -48,6 +48,7 @@
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
 DMA_HandleTypeDef hdma_i2c1_rx;
+DMA_HandleTypeDef hdma_i2c1_tx;
 
 SPI_HandleTypeDef hspi1;
 DMA_HandleTypeDef hdma_spi1_rx;
@@ -124,7 +125,11 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  // Initialize and start the VL53L4CD.
+
+  // Initialize scheduler (required for timers).
+  scheduler_init();
+
+  // Initialize VL53L4CD.
   vl53l4cd_init();
   vl53l4cd_start();
 
@@ -139,23 +144,22 @@ int main(void)
   // Initialize control loops.
   control_loops_init();
 
-  // Initialize scheduler.
-  scheduler_init();
+  // Initialize scheduler tasks.
   void (*heading_task)(void) = heading_loop;
   void (*yaw_rate_task)(void) = yaw_rate_loop;
   void (*run_state_machine_task)(void) = run_state_machine;
   void (*drive_task)(void) = drive;
   void (*tof_task)(void) = vl53l4cd_process_dma;
+  void (*imu_task)(void) = bno085_run;
   scheduler_add_task(heading_task, 10);
   scheduler_add_task(yaw_rate_task, 5);
   scheduler_add_task(run_state_machine_task, 10);
   scheduler_add_task(drive_task, 2);
   scheduler_add_task(tof_task, 100);
+  scheduler_add_task(imu_task, 1);
 
   while (1) {
     scheduler_run();
-
-    bno085_run(); // BNO085 process.
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -511,7 +515,7 @@ static void MX_DMA_Init(void)
   HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel6_IRQn);
   /* DMA1_Channel7_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel7_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Channel7_IRQn, 1, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel7_IRQn);
   /* DMA2_Channel3_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Channel3_IRQn, 0, 0);
@@ -519,6 +523,9 @@ static void MX_DMA_Init(void)
   /* DMA2_Channel4_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Channel4_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Channel4_IRQn);
+  /* DMA2_Channel7_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Channel7_IRQn, 1, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Channel7_IRQn);
 
 }
 
@@ -579,7 +586,7 @@ static void MX_GPIO_Init(void)
   HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
-  HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 1, 0);
   HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
