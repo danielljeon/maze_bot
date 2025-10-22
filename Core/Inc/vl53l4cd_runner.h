@@ -47,6 +47,8 @@ void HAL_GPIO_EXTI_Callback_vl53l4cd(uint16_t n);
 
 void HAL_I2C_MemRxCpltCallback_vl53l4cd(I2C_HandleTypeDef *hi2c);
 
+void HAL_I2C_MasterTxCpltCallback_vl53l4cd(I2C_HandleTypeDef *hi2c);
+
 /** Public functions. *********************************************************/
 
 /**

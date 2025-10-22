@@ -75,79 +75,79 @@ static void next_state(void) {
 
 // TODO(Maze bot): CURRENTLY HAS HARDCODED OVERRIDES.
 void run_state_machine(void) {
-  switch (bot_state) {
-  case STATE_IDLE:
-    idle();
-    // TODO: SHOULD ADD A CASCADED STATE BASED PID HEADING CONTROL DISABLEMENT.
-    break;
-
-  case STATE_INIT:
-    init();
-
-    // Initialize and start the VL53L4CD.
-    vl53l4cd_init();
-    vl53l4cd_start();
-
-    next_state();
-    break;
-
-  case STATE_STANDBY:
-    if (state_standby_counter > 10) {
-      // Stop the VL53L4CD.
-      vl53l4cd_stop();
-
-      // Initialize BNO085.
-      bno085_reset();
-      bno085_init();
-
-      // Initialize startup controls.
-      zero_heading();
-
-      next_state();
-
-    } else if (vl53l4cd_distance_mm > 100) {
-      state_standby_counter++;
-    }
-
-    break;
-
-  case STATE_MOMENTARY_SENSE:
-    break;
-
-  case STATE_TURN:
-
-    set_relative_heading(turns[playbook_index]);
-
-    next_state();
-    break;
-
-  case STATE_ADVANCE:
-    if (current_advance_counter > advance_counter_limits[playbook_index]) {
-      h_bridge_linear = 0.0f;
-
-      next_state();
-      current_advance_counter = 0; // Clear for next STATE_ADVANCE entrance.
-
-    } else {
-      h_bridge_linear = 0.01f;
-      current_advance_counter++;
-    }
-
-    break;
-
-  case STATE_PICKUP_PACKAGE:
-    pickup_package();
-
-    next_state();
-    break;
-
-  case STATE_DROP_PACKAGE:
-    drop_package();
-
-    next_state();
-    break;
-
-  default:
-    break;
-  }
+  // switch (bot_state) {
+  // case STATE_IDLE:
+  //   idle();
+  //   // TODO: SHOULD ADD A CASCADED STATE BASED PID HEADING CONTROL DISABLEMENT.
+  //   break;
+  //
+  // case STATE_INIT:
+  //   init();
+  //
+  //   // Initialize and start the VL53L4CD.
+  //   vl53l4cd_init();
+  //   vl53l4cd_start();
+  //
+  //   next_state();
+  //   break;
+  //
+  // case STATE_STANDBY:
+  //   if (state_standby_counter > 10) {
+  //     // Stop the VL53L4CD.
+  //     vl53l4cd_stop();
+  //
+  //     // Initialize BNO085.
+  //     bno085_reset();
+  //     bno085_init();
+  //
+  //     // Initialize startup controls.
+  //     zero_heading();
+  //
+  //     next_state();
+  //
+  //   } else if (vl53l4cd_distance_mm > 100) {
+  //     state_standby_counter++;
+  //   }
+  //
+  //   break;
+  //
+  // case STATE_MOMENTARY_SENSE:
+  //   break;
+  //
+  // case STATE_TURN:
+  //
+  //   set_relative_heading(turns[playbook_index]);
+  //
+  //   next_state();
+  //   break;
+  //
+  // case STATE_ADVANCE:
+  //   if (current_advance_counter > advance_counter_limits[playbook_index]) {
+  //     h_bridge_linear = 0.0f;
+  //
+  //     next_state();
+  //     current_advance_counter = 0; // Clear for next STATE_ADVANCE entrance.
+  //
+  //   } else {
+  //     h_bridge_linear = 0.01f;
+  //     current_advance_counter++;
+  //   }
+  //
+  //   break;
+  //
+  // case STATE_PICKUP_PACKAGE:
+  //   pickup_package();
+  //
+  //   next_state();
+  //   break;
+  //
+  // case STATE_DROP_PACKAGE:
+  //   drop_package();
+  //
+  //   next_state();
+  //   break;
+  //
+  // default:
+  //   break;
+  // }
 }
