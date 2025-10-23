@@ -16,6 +16,7 @@ typedef enum i2c_dma_state_e {
   I2C_DATA_RX_REQUEST,        // Request DMA RX.
   I2C_DATA_RX_PENDING,        // Pending DMA RX arrival.
   I2C_DATA_RX_LOADED,         // Data arrived and loaded in DMA buffer.
+  I2C_CLEAR_DATA_READY_INT,   // Pending clear data ready call.
 } i2c_dma_state_t;
 
 /** Private variables. ********************************************************/
@@ -120,13 +121,16 @@ void HAL_GPIO_EXTI_Callback_vl53l4cd(uint16_t n) {
 #else
     if (i2c_dma_state == I2C_WAITING_DATA_READY_INT) {
       i2c_dma_state = I2C_DATA_RX_REQUEST;
+      if (vl53l4cd_start_distance_dma(vl53l4cd_dev) == HAL_OK) {
+        i2c_dma_state = I2C_DATA_RX_PENDING;
+      }
     }
 #endif
   }
 }
 
 void HAL_I2C_MemRxCpltCallback_vl53l4cd(I2C_HandleTypeDef *hi2c) {
-  if (hi2c == &VL53L4CD_HI2C && i2c_dma_state == I2C_DATA_RX_PENDING) {
+  if (hi2c == &VL53L4CD_HI2C) {
     i2c_dma_state = I2C_DATA_RX_LOADED;
   }
 }
@@ -196,9 +200,14 @@ void vl53l4cd_process_dma(void) {
     vl53l4cd_number_of_spad = data.number_of_spad;
     vl53l4cd_sigma_mm = data.sigma_mm;
 
-    // Clear interrupt and reset state machine.
-    vl53l4cd_clear_interrupt_dma(vl53l4cd_dev);
-    i2c_dma_state = I2C_WAITING_DATA_READY_INT;
+    // Clear interrupt.
+    i2c_dma_state = I2C_CLEAR_DATA_READY_INT;
+    break;
+
+  case I2C_CLEAR_DATA_READY_INT:
+    if (vl53l4cd_clear_interrupt_dma(vl53l4cd_dev) == HAL_OK) {
+      i2c_dma_state = I2C_WAITING_DATA_READY_INT;
+    }
     break;
 
   default:

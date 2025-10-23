@@ -126,12 +126,12 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  // Initialize scheduler (required for timers).
-  scheduler_init();
-
   // Initialize VL53L4CD.
   vl53l4cd_init();
   vl53l4cd_start();
+
+  // Initialize scheduler (required for timers).
+  scheduler_init();
 
   // Initialize BNO085.
   bno085_reset();
