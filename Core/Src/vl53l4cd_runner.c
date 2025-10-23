@@ -179,8 +179,9 @@ int8_t vl53l4cd_process_dma(void) {
   switch (i2c_dma_state) {
 
   case I2C_DATA_RX_REQUEST:
-    vl53l4cd_start_distance_dma(vl53l4cd_dev);
-    i2c_dma_state = I2C_DATA_RX_PENDING;
+    if (vl53l4cd_start_distance_dma(vl53l4cd_dev) == HAL_OK) {
+      i2c_dma_state = I2C_DATA_RX_PENDING;
+    }
     break;
 
   case I2C_DATA_RX_LOADED:
@@ -197,7 +198,6 @@ int8_t vl53l4cd_process_dma(void) {
 
     // Clear interrupt and reset state machine.
     vl53l4cd_clear_interrupt_dma(vl53l4cd_dev);
-    i2c_dma_state = I2C_WAITING_DATA_READY_INT;
     break;
 
   default:
