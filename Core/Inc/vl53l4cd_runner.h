@@ -12,6 +12,7 @@
 #include "VL53L4CD_api.h"
 #include "VL53L4CD_calibration.h"
 #include "platform.h"
+#include <stdbool.h>
 
 /** STM32 port and pin configs. ***********************************************/
 
@@ -28,8 +29,6 @@
 #define VL53L4CD_SENSOR_ID 0xEBAA
 #define VL53L4CD_DEVICE_ADDRESS 0x52 // 8-bit, 0x29 for 7-bit address.
 
-#define VL53L4CD_USE_ONLY_DMA_DISTANCE // Define for only DMA (RX) utilization.
-
 /** Public variables. *********************************************************/
 
 extern uint8_t vl53l4cd_range_status;
@@ -41,13 +40,11 @@ extern uint32_t vl53l4cd_signal_per_spad_kcps;
 extern uint16_t vl53l4cd_number_of_spad;
 extern uint16_t vl53l4cd_sigma_mm;
 
+extern volatile bool int_ready;
+
 /** User implementations into STM32 HAL (overwrite weak HAL functions). *******/
 
 void HAL_GPIO_EXTI_Callback_vl53l4cd(uint16_t n);
-
-void HAL_I2C_MemRxCpltCallback_vl53l4cd(I2C_HandleTypeDef *hi2c);
-
-void HAL_I2C_MasterTxCpltCallback_vl53l4cd(I2C_HandleTypeDef *hi2c);
 
 /** Public functions. *********************************************************/
 
@@ -71,15 +68,7 @@ int8_t vl53l4cd_init(void);
  */
 int8_t vl53l4cd_start(void);
 
-/**
- * @brief Process the current DMA RX buffer.
- *
- * @return Result of VL53L4CD ULD status.
- * @retval == 0 -> Success.
- * @retval > 0  -> Warning.
- * @retval < 0  -> Error.
- */
-void vl53l4cd_process_dma(void);
+void vl53l4cd_process(void);
 
 /**
  * @brief Stop interrupt based ranging.
