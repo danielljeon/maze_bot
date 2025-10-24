@@ -8,22 +8,9 @@
 
 #include "vl53l4cd_runner.h"
 
-/** Private types. ************************************************************/
-
-typedef enum i2c_dma_state_e {
-  IDLE,                       // VL53L4CD not yet configured.
-  I2C_WAITING_DATA_READY_INT, // Awaiting next data ready call.
-  I2C_DATA_RX_REQUEST,        // Request DMA RX.
-  I2C_DATA_RX_PENDING,        // Pending DMA RX arrival.
-  I2C_DATA_RX_LOADED,         // Data arrived and loaded in DMA buffer.
-  I2C_CLEAR_DATA_READY_INT,   // Pending clear data ready call.
-} i2c_dma_state_t;
-
 /** Private variables. ********************************************************/
 
 static Dev_t vl53l4cd_dev = VL53L4CD_DEVICE_ADDRESS;
-
-static volatile i2c_dma_state_t i2c_dma_state = IDLE;
 
 // DMA RX array for VL53L4CD I2C read (16-bit).
 static uint8_t vl53l4cd_dma_rx_buffer[2] = {0};
@@ -48,6 +35,8 @@ uint32_t vl53l4cd_signal_rate_kcps = 0;
 uint32_t vl53l4cd_signal_per_spad_kcps = 0;
 uint16_t vl53l4cd_number_of_spad = 0;
 uint16_t vl53l4cd_sigma_mm = 0;
+
+volatile bool int_ready = false;
 
 /** Private functions. ********************************************************/
 
@@ -102,51 +91,17 @@ VL53L4CD_Error vl53l4cd_get_distance_dma(VL53L4CD_ResultsData_t *p_result) {
 
 void HAL_GPIO_EXTI_Callback_vl53l4cd(uint16_t n) {
   if (n == VL53L4CD_INT_PIN) {
-
-#ifndef VL53L4CD_USE_ONLY_DMA_DISTANCE
-    VL53L4CD_ResultsData_t data = {0};
-
-    VL53L4CD_GetResult(vl53l4cd_dev, &data);
-
-    vl53l4cd_range_status = data.range_status;
-    vl53l4cd_distance_mm = data.distance_mm;
-    vl53l4cd_ambient_rate_kcps = data.ambient_rate_kcps;
-    vl53l4cd_ambient_per_spad_kcps = data.ambient_per_spad_kcps;
-    vl53l4cd_signal_rate_kcps = data.signal_rate_kcps;
-    vl53l4cd_signal_per_spad_kcps = data.signal_per_spad_kcps;
-    vl53l4cd_number_of_spad = data.number_of_spad;
-    vl53l4cd_sigma_mm = data.sigma_mm;
-
-    VL53L4CD_ClearInterrupt(vl53l4cd_dev);
-#else
-    if (i2c_dma_state == I2C_WAITING_DATA_READY_INT) {
-      i2c_dma_state = I2C_DATA_RX_REQUEST;
-      if (vl53l4cd_start_distance_dma(vl53l4cd_dev) == HAL_OK) {
-        i2c_dma_state = I2C_DATA_RX_PENDING;
-      }
-    }
-#endif
-  }
-}
-
-void HAL_I2C_MemRxCpltCallback_vl53l4cd(I2C_HandleTypeDef *hi2c) {
-  if (hi2c == &VL53L4CD_HI2C) {
-    i2c_dma_state = I2C_DATA_RX_LOADED;
-  }
-}
-
-void HAL_I2C_MasterTxCpltCallback_vl53l4cd(I2C_HandleTypeDef *hi2c) {
-  if (hi2c == &VL53L4CD_HI2C) {
-    i2c_dma_state = I2C_WAITING_DATA_READY_INT;
+    int_ready = true;
   }
 }
 
 /** Public functions. *********************************************************/
 
 int8_t vl53l4cd_init(void) {
-  i2c_dma_state = IDLE; // Device not yet configured.
-
   int8_t status = 0;
+
+  // Reset interrupt flag.
+  int_ready = false;
 
   // Ensure XSHUT is high.
   HAL_GPIO_WritePin(VL53L4CD_XSHUT_PORT, VL53L4CD_XSHUT_PIN, GPIO_PIN_SET);
@@ -172,46 +127,36 @@ int8_t vl53l4cd_start(void) {
 
   if (status == 0) {
     // Ready for data ready interrupt.
-    i2c_dma_state = I2C_WAITING_DATA_READY_INT;
   }
   return status;
 }
 
-void vl53l4cd_process_dma(void) {
-  VL53L4CD_ResultsData_t data = {0};
+void vl53l4cd_process(void) {
+  if (int_ready == true) {
+    uint8_t data_write[2];
+    uint8_t data_read[2];
 
-  switch (i2c_dma_state) {
+    // Get result.
+    VL53L4CD_Error status = VL53L4CD_ERROR_NONE;
 
-  case I2C_DATA_RX_REQUEST:
-    if (vl53l4cd_start_distance_dma(vl53l4cd_dev) == HAL_OK) {
-      i2c_dma_state = I2C_DATA_RX_PENDING;
+    data_write[0] = (VL53L4CD_RESULT__DISTANCE >> 8) & 0xFF;
+    data_write[1] = VL53L4CD_RESULT__DISTANCE & 0xFF;
+    status = HAL_I2C_Mem_Read(&VL53L4CD_HI2C, vl53l4cd_dev,
+                              VL53L4CD_RESULT__DISTANCE, I2C_MEMADD_SIZE_16BIT,
+                              data_read, 2, 100);
+
+    if (status == VL53L4CD_ERROR_NONE) {
+      vl53l4cd_distance_mm = (data_read[0] << 8) | (data_read[1]);
+
+      // End, clear interrupt.
+      int_ready = false;
+      VL53L4CD_ClearInterrupt(vl53l4cd_dev);
+    } else {
+      // Clear interrupt, but no advance internally.
+      VL53L4CD_ClearInterrupt(vl53l4cd_dev);
     }
-    break;
 
-  case I2C_DATA_RX_LOADED:
-    vl53l4cd_get_distance_dma(&data); // DMA based distance only update.
-
-    vl53l4cd_range_status = data.range_status;
-    vl53l4cd_distance_mm = data.distance_mm;
-    vl53l4cd_ambient_rate_kcps = data.ambient_rate_kcps;
-    vl53l4cd_ambient_per_spad_kcps = data.ambient_per_spad_kcps;
-    vl53l4cd_signal_rate_kcps = data.signal_rate_kcps;
-    vl53l4cd_signal_per_spad_kcps = data.signal_per_spad_kcps;
-    vl53l4cd_number_of_spad = data.number_of_spad;
-    vl53l4cd_sigma_mm = data.sigma_mm;
-
-    // Clear interrupt.
-    i2c_dma_state = I2C_CLEAR_DATA_READY_INT;
-    break;
-
-  case I2C_CLEAR_DATA_READY_INT:
-    if (vl53l4cd_clear_interrupt_dma(vl53l4cd_dev) == HAL_OK) {
-      i2c_dma_state = I2C_WAITING_DATA_READY_INT;
-    }
-    break;
-
-  default:
-    break;
+    // vl53l4cd_clear_interrupt_dma(vl53l4cd_dev);
   }
 }
 

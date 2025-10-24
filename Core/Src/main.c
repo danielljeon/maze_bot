@@ -47,8 +47,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
-DMA_HandleTypeDef hdma_i2c1_rx;
-DMA_HandleTypeDef hdma_i2c1_tx;
 
 SPI_HandleTypeDef hspi1;
 DMA_HandleTypeDef hdma_spi1_rx;
@@ -130,6 +128,8 @@ int main(void)
   vl53l4cd_init();
   vl53l4cd_start();
 
+  HAL_NVIC_DisableIRQ(EXTI4_IRQn);
+
   // Initialize scheduler (required for timers).
   scheduler_init();
 
@@ -149,16 +149,18 @@ int main(void)
   void (*yaw_rate_task)(void) = yaw_rate_loop;
   void (*run_state_machine_task)(void) = run_state_machine;
   void (*drive_task)(void) = drive;
-  void (*tof_task)(void) = vl53l4cd_process_dma;
-  void (*imu_task)(void) = bno085_run;
+  void (*tof_task)(void) = vl53l4cd_process;
   scheduler_add_task(heading_task, 10);
   scheduler_add_task(yaw_rate_task, 5);
   scheduler_add_task(run_state_machine_task, 10);
   scheduler_add_task(drive_task, 2);
   scheduler_add_task(tof_task, 100);
-  scheduler_add_task(imu_task, 1);
+
+  // int_ready = true;
+  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
   while (1) {
+    bno085_run();
     scheduler_run();
     /* USER CODE END WHILE */
 
@@ -514,18 +516,12 @@ static void MX_DMA_Init(void)
   /* DMA1_Channel6_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel6_IRQn);
-  /* DMA1_Channel7_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel7_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Channel7_IRQn);
   /* DMA2_Channel3_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Channel3_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Channel3_IRQn);
   /* DMA2_Channel4_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Channel4_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Channel4_IRQn);
-  /* DMA2_Channel7_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Channel7_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Channel7_IRQn);
 
 }
 
