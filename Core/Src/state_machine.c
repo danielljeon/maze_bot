@@ -46,8 +46,8 @@ state_t bot_state = INITIAL_STATE;
 
 static void idle(void) {
   // Coast drive base motors.
-  h_bridge_1_command(GPIO_PIN_RESET, GPIO_PIN_RESET, 0);
-  h_bridge_2_command(GPIO_PIN_RESET, GPIO_PIN_RESET, 0);
+  h_bridge_1_command(GPIO_PIN_RESET, 0); // Directional, but no movement.
+  h_bridge_2_command(GPIO_PIN_RESET, 0); // Directional, but no movement.
 }
 
 static void pickup_package(void) { servo_command(1000); }
