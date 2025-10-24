@@ -6,11 +6,9 @@
   <summary>Table of Contents</summary>
 
 <!-- TOC -->
-
 * [Changelog](#changelog)
-    * [v0.1.0 (2025-10-17)](#v010--2025-10-17-)
-    * [v0.2.0 (WIP)](#v020-wip)
-
+  * [v0.1.0 (2025-10-17)](#v010--2025-10-17-)
+  * [v0.2.0 (WIP)](#v020-wip)
 <!-- TOC -->
 
 </details>
@@ -34,3 +32,4 @@
             - H-bridge drivers updated accordingly.
         - H-bridge PWM pin on PA9 moved to PA11 (`TIM1_CH4`).
         - VL53L4CD I2C moved off PB6 and PB7 to PA9 and PA 10.
+- Updated VL53L4CD driver for simplicity and concurrent sensor operation.
