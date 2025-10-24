@@ -31,7 +31,7 @@ extern DMA_HandleTypeDef hdma_tim1_up;
 
 extern DMA_HandleTypeDef hdma_tim1_ch1;
 
-extern DMA_HandleTypeDef hdma_tim1_ch2;
+extern DMA_HandleTypeDef hdma_tim1_ch4_trig_com;
 
 extern DMA_HandleTypeDef hdma_tim15_ch1_up_trig_com;
 
@@ -115,17 +115,17 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef* hi2c)
       Error_Handler();
     }
 
-    __HAL_RCC_GPIOB_CLK_ENABLE();
+    __HAL_RCC_GPIOA_CLK_ENABLE();
     /**I2C1 GPIO Configuration
-    PB6     ------> I2C1_SCL
-    PB7     ------> I2C1_SDA
+    PA9     ------> I2C1_SCL
+    PA10     ------> I2C1_SDA
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
+    GPIO_InitStruct.Pin = GPIO_PIN_9|GPIO_PIN_10;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF4_I2C1;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     /* Peripheral clock enable */
     __HAL_RCC_I2C1_CLK_ENABLE();
@@ -154,12 +154,12 @@ void HAL_I2C_MspDeInit(I2C_HandleTypeDef* hi2c)
     __HAL_RCC_I2C1_CLK_DISABLE();
 
     /**I2C1 GPIO Configuration
-    PB6     ------> I2C1_SCL
-    PB7     ------> I2C1_SDA
+    PA9     ------> I2C1_SCL
+    PA10     ------> I2C1_SDA
     */
-    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_6);
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_9);
 
-    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_7);
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_10);
 
     /* USER CODE BEGIN I2C1_MspDeInit 1 */
 
@@ -325,22 +325,26 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* htim_pwm)
 
     __HAL_LINKDMA(htim_pwm,hdma[TIM_DMA_ID_CC1],hdma_tim1_ch1);
 
-    /* TIM1_CH2 Init */
-    hdma_tim1_ch2.Instance = DMA1_Channel3;
-    hdma_tim1_ch2.Init.Request = DMA_REQUEST_7;
-    hdma_tim1_ch2.Init.Direction = DMA_MEMORY_TO_PERIPH;
-    hdma_tim1_ch2.Init.PeriphInc = DMA_PINC_DISABLE;
-    hdma_tim1_ch2.Init.MemInc = DMA_MINC_ENABLE;
-    hdma_tim1_ch2.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
-    hdma_tim1_ch2.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
-    hdma_tim1_ch2.Init.Mode = DMA_CIRCULAR;
-    hdma_tim1_ch2.Init.Priority = DMA_PRIORITY_LOW;
-    if (HAL_DMA_Init(&hdma_tim1_ch2) != HAL_OK)
+    /* TIM1_CH4_TRIG_COM Init */
+    hdma_tim1_ch4_trig_com.Instance = DMA1_Channel4;
+    hdma_tim1_ch4_trig_com.Init.Request = DMA_REQUEST_7;
+    hdma_tim1_ch4_trig_com.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    hdma_tim1_ch4_trig_com.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_tim1_ch4_trig_com.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_tim1_ch4_trig_com.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+    hdma_tim1_ch4_trig_com.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
+    hdma_tim1_ch4_trig_com.Init.Mode = DMA_CIRCULAR;
+    hdma_tim1_ch4_trig_com.Init.Priority = DMA_PRIORITY_LOW;
+    if (HAL_DMA_Init(&hdma_tim1_ch4_trig_com) != HAL_OK)
     {
       Error_Handler();
     }
 
-    __HAL_LINKDMA(htim_pwm,hdma[TIM_DMA_ID_CC2],hdma_tim1_ch2);
+    /* Several peripheral DMA handle pointers point to the same DMA handle.
+     Be aware that there is only one channel to perform all the requested DMAs. */
+    __HAL_LINKDMA(htim_pwm,hdma[TIM_DMA_ID_CC4],hdma_tim1_ch4_trig_com);
+    __HAL_LINKDMA(htim_pwm,hdma[TIM_DMA_ID_TRIGGER],hdma_tim1_ch4_trig_com);
+    __HAL_LINKDMA(htim_pwm,hdma[TIM_DMA_ID_COMMUTATION],hdma_tim1_ch4_trig_com);
 
     /* USER CODE BEGIN TIM1_MspInit 1 */
 
@@ -406,9 +410,9 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* htim)
     __HAL_RCC_GPIOA_CLK_ENABLE();
     /**TIM1 GPIO Configuration
     PA8     ------> TIM1_CH1
-    PA9     ------> TIM1_CH2
+    PA11     ------> TIM1_CH4
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9;
+    GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_11;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -461,7 +465,9 @@ void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef* htim_pwm)
     /* TIM1 DMA DeInit */
     HAL_DMA_DeInit(htim_pwm->hdma[TIM_DMA_ID_UPDATE]);
     HAL_DMA_DeInit(htim_pwm->hdma[TIM_DMA_ID_CC1]);
-    HAL_DMA_DeInit(htim_pwm->hdma[TIM_DMA_ID_CC2]);
+    HAL_DMA_DeInit(htim_pwm->hdma[TIM_DMA_ID_CC4]);
+    HAL_DMA_DeInit(htim_pwm->hdma[TIM_DMA_ID_TRIGGER]);
+    HAL_DMA_DeInit(htim_pwm->hdma[TIM_DMA_ID_COMMUTATION]);
     /* USER CODE BEGIN TIM1_MspDeInit 1 */
 
     /* USER CODE END TIM1_MspDeInit 1 */

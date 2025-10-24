@@ -46,24 +46,18 @@ void drive(void) {
   const float h_bridge_2_drive = h_bridge_linear + h_bridge_2_yaw_control;
 
   if (h_bridge_1_drive == 0) {
-    h_bridge_1_command(GPIO_PIN_RESET, GPIO_PIN_RESET, 0);
+    h_bridge_1_command(GPIO_PIN_RESET, 0);
   } else {
     const GPIO_PinState pin_1_a_state =
         h_bridge_1_drive > 0 ? GPIO_PIN_SET : GPIO_PIN_RESET;
-    const GPIO_PinState pin_1_b_state =
-        h_bridge_1_drive > 0 ? GPIO_PIN_RESET : GPIO_PIN_SET;
-    h_bridge_1_command(pin_1_a_state, pin_1_b_state,
-                       scale_pwm_duty(h_bridge_1_drive));
+    h_bridge_1_command(pin_1_a_state, scale_pwm_duty(h_bridge_1_drive));
   }
-  if (h_bridge_2_drive == 0) {
-    h_bridge_2_command(GPIO_PIN_RESET, GPIO_PIN_RESET, 0);
-  } else {
 
+  if (h_bridge_2_drive == 0) {
+    h_bridge_2_command(GPIO_PIN_RESET, 0);
+  } else {
     const GPIO_PinState pin_2_a_state =
         h_bridge_2_drive > 0 ? GPIO_PIN_SET : GPIO_PIN_RESET;
-    const GPIO_PinState pin_2_b_state =
-        h_bridge_2_drive > 0 ? GPIO_PIN_RESET : GPIO_PIN_SET;
-    h_bridge_2_command(pin_2_a_state, pin_2_b_state,
-                       scale_pwm_duty(h_bridge_2_drive));
+    h_bridge_2_command(pin_2_a_state, scale_pwm_duty(h_bridge_2_drive));
   }
 }
