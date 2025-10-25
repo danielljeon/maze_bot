@@ -16,9 +16,16 @@
 
 /** STM32 port and pin configs. ***********************************************/
 
+#define VL53L4CD_USE_3 // Assumes 1 if not defined.
+
 // GPIO for XSHUT.
 #define VL53L4CD_XSHUT_PORT GPIOB
 #define VL53L4CD_XSHUT_PIN GPIO_PIN_5
+
+// XSHUT defined for 2 out of 3, 1 out of 3 uses the default address.
+// GPIO for XSHUT.
+#define VL53L4CD_XSHUT_PORT_2 GPIOA
+#define VL53L4CD_XSHUT_PIN_2 GPIO_PIN_3
 
 // GPIO for GPIO1 (interrupt).
 #define VL53L4CD_INT_PORT GPIOB
@@ -31,14 +38,7 @@
 
 /** Public variables. *********************************************************/
 
-extern uint8_t vl53l4cd_range_status;
-extern uint16_t vl53l4cd_distance_mm;
-extern uint32_t vl53l4cd_ambient_rate_kcps;
-extern uint32_t vl53l4cd_ambient_per_spad_kcps;
-extern uint32_t vl53l4cd_signal_rate_kcps;
-extern uint32_t vl53l4cd_signal_per_spad_kcps;
-extern uint16_t vl53l4cd_number_of_spad;
-extern uint16_t vl53l4cd_sigma_mm;
+extern uint16_t vl53l4cd_distance_mm[3];
 
 extern volatile bool int_ready;
 
