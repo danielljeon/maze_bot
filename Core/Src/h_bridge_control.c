@@ -12,7 +12,7 @@
 
 /** Public variables. *********************************************************/
 
-volatile uint16_t tim_h_bridge_pwm[2] = {0, 0};
+volatile uint16_t tim_h_bridge_pwm[4] = {0, 0, 0, 0};
 
 /** Public functions. *********************************************************/
 
@@ -23,11 +23,11 @@ void h_bridge_command_init(void) {
   HAL_TIM_PWM_Init(&H_BRIDGE_TIM);
 
   HAL_TIM_PWM_Start(&H_BRIDGE_TIM, TIM_CHANNEL_1);
-  HAL_TIM_PWM_Start(&H_BRIDGE_TIM, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&H_BRIDGE_TIM, TIM_CHANNEL_4);
 
   HAL_TIM_DMABurst_WriteStart(&H_BRIDGE_TIM, TIM_DMABASE_CCR1, TIM_DMA_UPDATE,
                               (uint32_t *)tim_h_bridge_pwm,
-                              TIM_DMABURSTLENGTH_2TRANSFERS);
+                              TIM_DMABURSTLENGTH_4TRANSFERS);
 }
 
 void h_bridge_1_command(const GPIO_PinState pin_1_a_state,
@@ -45,5 +45,5 @@ void h_bridge_2_command(const GPIO_PinState pin_2_a_state,
   HAL_GPIO_WritePin(H_BRIDGE_2_A_PORT, H_BRIDGE_2_A_PIN, pin_2_a_state);
 
   // Set PWM.
-  tim_h_bridge_pwm[1] = pwm_2;
+  tim_h_bridge_pwm[3] = pwm_2;
 }

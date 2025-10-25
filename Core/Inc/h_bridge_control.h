@@ -26,7 +26,7 @@ extern TIM_HandleTypeDef htim1;
 
 /** Public variables. *********************************************************/
 
-extern volatile uint16_t tim_h_bridge_pwm[2];
+extern volatile uint16_t tim_h_bridge_pwm[4];
 
 /** Public functions. *********************************************************/
 
