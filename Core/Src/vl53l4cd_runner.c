@@ -10,13 +10,25 @@
 
 /** Private variables. ********************************************************/
 
-static Dev_t vl53l4cd_dev = VL53L4CD_DEVICE_ADDRESS;
+static Dev_t vl53l4cd_dev = VL53L4CD_DEVICE_ADDRESS + 2;
+// If using "n" VL53L4CD TOFs, device addresses are set to:
+// 1. VL53L4CD_DEVICE_ADDRESS + 2
+// 2. VL53L4CD_DEVICE_ADDRESS + 4
+// 3. VL53L4CD_DEVICE_ADDRESS + 6
+//    ...
+// n. VL53L4CD_DEVICE_ADDRESS + n
+// 7-bit I2C addresses (left shift by 1) so must increment by 2.
 
-// DMA RX array for VL53L4CD I2C read (16-bit).
-static uint8_t vl53l4cd_dma_rx_buffer[2] = {0};
+static GPIO_TypeDef *vl53l4cd_xshut_ports[2] = {VL53L4CD_XSHUT_PORT_2,
+                                                VL53L4CD_XSHUT_PORT};
+static uint16_t vl53l4cd_xshut_pins[2] = {VL53L4CD_XSHUT_PIN_2,
+                                          VL53L4CD_XSHUT_PIN};
 
-// DMA TX array for VL53L4CD I2C read (16-bit + 8-bit).
-static uint8_t vl53l4cd_dma_tx_buffer[3] = {0};
+#ifdef VL53L4CD_USE_3
+static const uint8_t device_count = 3;
+#else
+static const uint8_t device_count = 1;
+#endif
 
 /** STM32 port and pin configs. ***********************************************/
 
@@ -27,65 +39,9 @@ extern I2C_HandleTypeDef hi2c1;
 
 /** Public variables. *********************************************************/
 
-uint8_t vl53l4cd_range_status = 0;
-uint16_t vl53l4cd_distance_mm = 0;
-uint32_t vl53l4cd_ambient_rate_kcps = 0;
-uint32_t vl53l4cd_ambient_per_spad_kcps = 0;
-uint32_t vl53l4cd_signal_rate_kcps = 0;
-uint32_t vl53l4cd_signal_per_spad_kcps = 0;
-uint16_t vl53l4cd_number_of_spad = 0;
-uint16_t vl53l4cd_sigma_mm = 0;
+uint16_t vl53l4cd_distance_mm[3] = {0, 0, 0};
 
 volatile bool int_ready = false;
-
-/** Private functions. ********************************************************/
-
-/*
- * Note: This section of private functions are actually lower level logic. The
- * functions are made as a simplified DMA based operation. The functions follow
- * the similar structure and formatting to those in the `VL53L4CD_ULD_Driver`.
- */
-
-/**
- * @brief This function clears the interrupt using DMA (DMA version of
- * VL53L4CD_ClearInterrupt from the ULD).
- * @param dev : Device instance.
- * @return (VL53L4CD_ERROR) status : 0 if OK.
- */
-VL53L4CD_Error vl53l4cd_clear_interrupt_dma(Dev_t dev) {
-  VL53L4CD_Error status = VL53L4CD_ERROR_NONE;
-  vl53l4cd_dma_tx_buffer[0] = (VL53L4CD_SYSTEM__INTERRUPT_CLEAR >> 8) & 0xFF;
-  vl53l4cd_dma_tx_buffer[1] = (VL53L4CD_SYSTEM__INTERRUPT_CLEAR >> 0) & 0xFF;
-  vl53l4cd_dma_tx_buffer[2] = 0x01 & 0xFF;
-  status |= HAL_I2C_Master_Transmit_DMA(&hi2c1, dev, vl53l4cd_dma_tx_buffer, 3);
-
-  return status;
-}
-
-/**
- * @brief This function triggers the DMA read distance results from the sensor.
- * @param dev instance of selected VL53L4CD sensor.
- * @return (VL53L4CD_ERROR) status : 0 if OK.
- */
-VL53L4CD_Error vl53l4cd_start_distance_dma(Dev_t dev) {
-  VL53L4CD_Error status = VL53L4CD_ERROR_NONE;
-  status |=
-      HAL_I2C_Mem_Read_DMA(&hi2c1, dev, VL53L4CD_RESULT__DISTANCE,
-                           I2C_MEMADD_SIZE_16BIT, vl53l4cd_dma_rx_buffer, 2);
-  return status;
-}
-
-/**
- * @brief This function gets the distance reported by the sensor stored by DMA.
- * @param p_result Pointer of structure, filled with the distance result.
- * @return (VL53L4CD_ERROR) status : 0 if OK.
- */
-VL53L4CD_Error vl53l4cd_get_distance_dma(VL53L4CD_ResultsData_t *p_result) {
-  const uint16_t temp_16 = ((uint16_t)vl53l4cd_dma_rx_buffer[0] << 8) |
-                           vl53l4cd_dma_rx_buffer[1]; // MSB first.
-  p_result->distance_mm = temp_16;
-  return 0;
-}
 
 /** User implementations into STM32 HAL (overwrite weak HAL functions). *******/
 
@@ -103,63 +59,81 @@ int8_t vl53l4cd_init(void) {
   // Reset interrupt flag.
   int_ready = false;
 
-  // Ensure XSHUT is high.
-  HAL_GPIO_WritePin(VL53L4CD_XSHUT_PORT, VL53L4CD_XSHUT_PIN, GPIO_PIN_SET);
-
-  HAL_Delay(5);
-
-  // Get sensor ID.
-  uint16_t sensor_id = 0;
-  status = (int8_t)VL53L4CD_GetSensorId(vl53l4cd_dev, &sensor_id);
-
-  if (sensor_id != VL53L4CD_SENSOR_ID) {
-    return status;
+  // Set all TOFs to shutdown.
+  for (uint8_t i = 0; i < device_count - 1; i++) {
+    HAL_GPIO_WritePin(vl53l4cd_xshut_ports[i], vl53l4cd_xshut_pins[i],
+                      GPIO_PIN_RESET);
   }
 
-  // Initialize the sensor.
-  status = (int8_t)VL53L4CD_SensorInit(vl53l4cd_dev);
+  for (uint8_t i = 0; i < device_count; i++) {
+    // Entry.
+    if (i >= 1) {
+      HAL_GPIO_WritePin(vl53l4cd_xshut_ports[i - 1], vl53l4cd_xshut_pins[i - 1],
+                        GPIO_PIN_SET);
+    }
+    HAL_Delay(100);
+
+    // Get sensor ID.
+    uint16_t sensor_id = 0;
+    status = (int8_t)VL53L4CD_GetSensorId(VL53L4CD_DEVICE_ADDRESS, &sensor_id);
+
+    if (sensor_id != VL53L4CD_SENSOR_ID) {
+      return status;
+    }
+
+    // Initialize the sensor.
+    status = (int8_t)VL53L4CD_SensorInit(VL53L4CD_DEVICE_ADDRESS);
+
+    // Update the I2C address.
+    status =
+        VL53L4CD_SetI2CAddress(VL53L4CD_DEVICE_ADDRESS, vl53l4cd_dev + i * 2);
+    HAL_Delay(1);
+  }
 
   return status;
 }
 
 int8_t vl53l4cd_start(void) {
-  const int8_t status = (int8_t)VL53L4CD_StartRanging(vl53l4cd_dev);
-
-  if (status == 0) {
-    // Ready for data ready interrupt.
+  int8_t status = 0;
+  for (uint8_t i = 0; i < device_count; i++) {
+    status = (int8_t)VL53L4CD_StartRanging(vl53l4cd_dev + i * 2);
+    HAL_Delay(5);
   }
   return status;
 }
 
 void vl53l4cd_process(void) {
   if (int_ready == true) {
-    uint8_t data_write[2];
-    uint8_t data_read[2];
+    for (uint8_t i = 0; i < device_count; i++) {
 
-    // Get result.
-    VL53L4CD_Error status = VL53L4CD_ERROR_NONE;
+      // Get result.
+      uint8_t data_read[2];
+      VL53L4CD_Error status = VL53L4CD_ERROR_NONE;
 
-    data_write[0] = (VL53L4CD_RESULT__DISTANCE >> 8) & 0xFF;
-    data_write[1] = VL53L4CD_RESULT__DISTANCE & 0xFF;
-    status = HAL_I2C_Mem_Read(&VL53L4CD_HI2C, vl53l4cd_dev,
-                              VL53L4CD_RESULT__DISTANCE, I2C_MEMADD_SIZE_16BIT,
-                              data_read, 2, 100);
+      status = HAL_I2C_Mem_Read(&VL53L4CD_HI2C, vl53l4cd_dev + i * 2,
+                                VL53L4CD_RESULT__DISTANCE,
+                                I2C_MEMADD_SIZE_16BIT, data_read, 2, 100);
 
-    if (status == VL53L4CD_ERROR_NONE) {
-      vl53l4cd_distance_mm = (data_read[0] << 8) | (data_read[1]);
+      if (status == VL53L4CD_ERROR_NONE) {
+        vl53l4cd_distance_mm[i] = (data_read[0] << 8) | (data_read[1]);
 
-      // End, clear interrupt.
-      int_ready = false;
-      VL53L4CD_ClearInterrupt(vl53l4cd_dev);
-    } else {
-      // Clear interrupt, but no advance internally.
-      VL53L4CD_ClearInterrupt(vl53l4cd_dev);
+        VL53L4CD_ClearInterrupt(vl53l4cd_dev + i * 2);
+      } else {
+        // Clear interrupt, but no advance internally.
+        VL53L4CD_ClearInterrupt(vl53l4cd_dev + i * 2);
+      }
     }
 
-    // vl53l4cd_clear_interrupt_dma(vl53l4cd_dev);
+    // End, clear interrupt.
+    int_ready = false;
+    return;
   }
 }
 
 int8_t vl53l4cd_stop(void) {
-  return (int8_t)VL53L4CD_StopRanging(vl53l4cd_dev);
+  int8_t status = 0;
+  for (uint8_t i = 0; i < device_count; i++) {
+    status = (int8_t)VL53L4CD_StopRanging(vl53l4cd_dev + i * 2);
+  }
+  return status;
 }
