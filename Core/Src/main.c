@@ -158,7 +158,6 @@ int main(void)
   scheduler_add_task(drive_task, 2);
   scheduler_add_task(tof_task, 100);
 
-  // int_ready = true;
   HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
   while (1) {
