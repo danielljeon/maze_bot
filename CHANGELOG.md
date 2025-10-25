@@ -33,4 +33,5 @@
         - Move H-bridge PWM pin on PA9 (`TIM1_CH2`) to PA11 (`TIM1_CH4`).
             - Update H-bridge drivers accordingly.
         - Move VL53L4CD I2C off PB6 and PB7 to PA9 and PA 10.
-- Update VL53L4CD driver for simplicity and concurrent sensor operation.
+- Update VL53L4CD driver for simplicity, triple TOF and concurrent sensor
+  operation.
