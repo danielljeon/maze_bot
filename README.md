@@ -74,8 +74,8 @@ Terrain and maze solving robot for mechatronics design university course
 | PB1         | `GPIO_Output`           | Set high                       | BNO085 Pin 6: `PS0/Wake`         | Pull low to trigger wake. |
 |             |                         | Hardware pull-up               | BNO085 Pin 5: `PS1`              |                           |
 | PA1         | `GPIO_Output`           | Set high                       | BNO085 Pin 11: `NRST`            | Pull low to reset.        |
-| PB4         | `GPIO_EXTI4`            | Hardware pull-up, falling edge | VL53L4CD Pin 5: `XSHUT`          |                           |
-| PB5         | `GPIO_Output`           | Hardware pull-up               | VL53L4CD Pin 7: `GPIO1`          |                           |
+| PB4         | `GPIO_EXTI4`            | Hardware pull-up, falling edge | VL53L4CD Pin 7: `GPIO1`          |                           |
+| PB5         | `GPIO_Output`           | Hardware pull-up               | VL53L4CD Pin 5: `XSHUT`          |                           |
 | PA9         | `I2C1_SCL`              |                                | VL53L4CD Pin 10: `SCL`           |                           |
 | PA10        | `I2C1_SDA`              |                                | VL53L4CD Pin 9: `SDA`            |                           |
 | PA8         | `TIM1_CH1`              | PWM output                     | TB6612FNG Board Pin x: `PWMA`    |                           |
