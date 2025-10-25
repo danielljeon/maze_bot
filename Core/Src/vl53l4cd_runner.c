@@ -8,7 +8,19 @@
 
 #include "vl53l4cd_runner.h"
 
+/** Public variables. *********************************************************/
+
+uint16_t vl53l4cd_distance_mm_1;
+uint16_t vl53l4cd_distance_mm_2;
+uint16_t vl53l4cd_distance_mm_3;
+
 /** Private variables. ********************************************************/
+
+static uint16_t *vl53l4cd_distance_mm[3] = {
+    &vl53l4cd_distance_mm_1,
+    &vl53l4cd_distance_mm_2,
+    &vl53l4cd_distance_mm_3,
+};
 
 static Dev_t vl53l4cd_dev = VL53L4CD_DEVICE_ADDRESS + 2;
 // If using "n" VL53L4CD TOFs, device addresses are set to:
@@ -30,18 +42,14 @@ static const uint8_t device_count = 3;
 static const uint8_t device_count = 1;
 #endif
 
+static volatile bool int_ready = false;
+
 /** STM32 port and pin configs. ***********************************************/
 
 extern I2C_HandleTypeDef hi2c1;
 
 // I2C.
 #define VL53L4CD_HI2C hi2c1
-
-/** Public variables. *********************************************************/
-
-uint16_t vl53l4cd_distance_mm[3] = {0, 0, 0};
-
-volatile bool int_ready = false;
 
 /** User implementations into STM32 HAL (overwrite weak HAL functions). *******/
 
@@ -115,7 +123,7 @@ void vl53l4cd_process(void) {
                                 I2C_MEMADD_SIZE_16BIT, data_read, 2, 100);
 
       if (status == VL53L4CD_ERROR_NONE) {
-        vl53l4cd_distance_mm[i] = (data_read[0] << 8) | (data_read[1]);
+        *vl53l4cd_distance_mm[i] = ((uint16_t)data_read[0] << 8) | data_read[1];
 
         VL53L4CD_ClearInterrupt(vl53l4cd_dev + i * 2);
       } else {
@@ -124,9 +132,8 @@ void vl53l4cd_process(void) {
       }
     }
 
-    // End, clear interrupt.
+    // End, clear interrupt flag.
     int_ready = false;
-    return;
   }
 }
 
