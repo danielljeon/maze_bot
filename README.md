@@ -74,10 +74,14 @@ Terrain and maze solving robot for mechatronics design university course
 | PB1         | `GPIO_Output`           | Set high                       | BNO085 Pin 6: `PS0/Wake`         | Pull low to trigger wake. |
 |             |                         | Hardware pull-up               | BNO085 Pin 5: `PS1`              |                           |
 | PA1         | `GPIO_Output`           | Set high                       | BNO085 Pin 11: `NRST`            | Pull low to reset.        |
-| PB4         | `GPIO_EXTI4`            | Hardware pull-up, falling edge | VL53L4CD Pin 7: `GPIO1`          |                           |
-| PB5         | `GPIO_Output`           | Hardware pull-up               | VL53L4CD Pin 5: `XSHUT`          |                           |
 | PA9         | `I2C1_SCL`              |                                | VL53L4CD Pin 10: `SCL`           |                           |
 | PA10        | `I2C1_SDA`              |                                | VL53L4CD Pin 9: `SDA`            |                           |
+| PB4         | `GPIO_EXTI4`            | Hardware pull-up, falling edge | VL53L4CD (1 of 3) Pin 7: `GPIO1` |                           |
+| PB5         | `GPIO_Output`           | Hardware pull-up               | VL53L4CD (1 of 3) Pin 5: `XSHUT` |                           |
+|             |                         | Hardware pull-up, falling edge | VL53L4CD (2 of 3) Pin 7: `GPIO1` |                           |
+| PA3         | `GPIO_Output`           | Hardware pull-up               | VL53L4CD (2 of 3) Pin 5: `XSHUT` |                           |
+|             |                         | Hardware pull-up               | VL53L4CD (3 of 3) Pin 7: `GPIO1` |                           |
+|             |                         | Hardware pull-up               | VL53L4CD (3 of 3) Pin 5: `XSHUT` |                           |
 | PA8         | `TIM1_CH1`              | PWM output                     | TB6612FNG Board Pin x: `PWMA`    |                           |
 | PA11        | `TIM1_CH4`              | PWM output                     | TB6612FNG Board Pin x: `PWMB`    |                           |
 | PA12        | `GPIO_Output`           |                                | TB6612FNG Board Pin x: `DIR_A1`  |                           |
