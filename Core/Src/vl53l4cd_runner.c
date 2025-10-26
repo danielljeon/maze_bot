@@ -28,7 +28,7 @@ static Dev_t vl53l4cd_dev = VL53L4CD_DEVICE_ADDRESS + 2;
 // 2. VL53L4CD_DEVICE_ADDRESS + 4
 // 3. VL53L4CD_DEVICE_ADDRESS + 6
 //    ...
-// n. VL53L4CD_DEVICE_ADDRESS + n
+// n. VL53L4CD_DEVICE_ADDRESS + (2 * n)
 // 7-bit I2C addresses (left shift by 1) so must increment by 2.
 
 static GPIO_TypeDef *vl53l4cd_xshut_ports[2] = {VL53L4CD_XSHUT_PORT_2,
