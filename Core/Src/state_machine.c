@@ -21,26 +21,35 @@ static uint16_t state_standby_counter = 0;
 
 /** Definitions. **************************************************************/
 
-#define PLAYBOOK_COUNT 6
-#define INITIAL_STATE STATE_INIT
+#define STATE_MACHINE_PLAYBOOK_COUNT 6
+#define STATE_MACHINE_INITIAL_STATE STATE_INIT
+#define STATE_MACHINE_FINAL_STATE STATE_IDLE
 
 /** Private variables. ********************************************************/
 
 // State machine playbook.
 uint8_t playbook_index = 0;
-state_t playbook[PLAYBOOK_COUNT] = {
-    INITIAL_STATE, STATE_STANDBY,      STATE_TURN,
-    STATE_ADVANCE, STATE_DROP_PACKAGE, STATE_IDLE,
+state_t playbook[STATE_MACHINE_PLAYBOOK_COUNT] = {
+    STATE_MACHINE_INITIAL_STATE,
+    STATE_STANDBY,
+    STATE_TURN,
+    STATE_ADVANCE,
+    STATE_DROP_PACKAGE,
+    STATE_MACHINE_FINAL_STATE,
 };
 
 // Align secondary state based arrays to match state playbook_index.
-static float turns[PLAYBOOK_COUNT] = {0, 0, 0.45f, 0, 0, 0}; // Radians.
-static uint16_t advance_counter_limits[PLAYBOOK_COUNT] = {0, 0, 0, 875, 0, 0};
+static float turns[STATE_MACHINE_PLAYBOOK_COUNT] = {
+    0, 0, 0.45f, 0, 0, 0,
+}; // Radians.
+static uint16_t advance_counter_limits[STATE_MACHINE_PLAYBOOK_COUNT] = {
+    0, 0, 0, 875, 0, 0,
+};
 static uint16_t current_advance_counter = 0;
 
 /** Public variables. *********************************************************/
 
-state_t bot_state = INITIAL_STATE;
+state_t bot_state = STATE_MACHINE_INITIAL_STATE;
 
 /** Private functions. *********************************************************/
 
@@ -63,7 +72,7 @@ static void next_state(void) {
   playbook_index += 1;
 
   // Clamp the playbook for safety in case of overrun.
-  if (playbook_index >= PLAYBOOK_COUNT) {
+  if (playbook_index >= STATE_MACHINE_PLAYBOOK_COUNT) {
     bot_state = STATE_IDLE;
   } else {
     bot_state = playbook[playbook_index]; // Increment playbook.
