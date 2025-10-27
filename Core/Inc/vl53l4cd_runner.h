@@ -38,9 +38,7 @@
 
 /** Public variables. *********************************************************/
 
-extern uint16_t vl53l4cd_distance_mm_1;
-extern uint16_t vl53l4cd_distance_mm_2;
-extern uint16_t vl53l4cd_distance_mm_3;
+extern uint16_t vl53l4cd_distance_mm[3];
 
 /** User implementations into STM32 HAL (overwrite weak HAL functions). *******/
 
