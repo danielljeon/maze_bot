@@ -58,6 +58,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         Core/Src/controls.c
         Core/Src/drive.c
         Core/Src/h_bridge_control.c
+        Core/Src/maze_navigation.c
         Core/Src/pid.c
         Core/Src/scheduler.c
         Core/Src/servo_control.c
