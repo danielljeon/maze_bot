@@ -109,8 +109,7 @@ void run_state_machine(void) {
 
   case STATE_CENTER_MAZE:
     heading_error_rad_calc = heading_error_rad(
-        (float)vl53l4cd_distance_mm[0] + MAZE_BOT_TOF_LEFT_RIGHT_OFFSET_MM,
-        (float)vl53l4cd_distance_mm[2] + MAZE_BOT_TOF_LEFT_RIGHT_OFFSET_MM,
+        vl53l4cd_distance_mm[0], vl53l4cd_distance_mm[2],
         MAZE_BOT_TOF_ANGLE_RAD, MAZE_BOT_TOF_WIDTH_SPACING_MM);
 
     set_relative_heading(heading_error_rad_calc);
