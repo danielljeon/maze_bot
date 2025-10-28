@@ -15,7 +15,7 @@
 /** Definitions. **************************************************************/
 
 // Command deadband (unitless; |turn_cmd| = [0,1]).
-#define TURN_COMMAND_DEADBAND 0.06f
+#define TURN_COMMAND_DEADBAND 0.08f
 
 /** Private variables. ********************************************************/
 

@@ -27,14 +27,14 @@ volatile float position_error_mm_calc = 0;
 static mode_t mode = STRAIGHT;
 
 // Calibrations.
-static const float V_FAST = 0.4f;       // Forward command in [-1,1].
-static const float K_THETA = 1.60f;     // Corridor parallel gain (rad -> cmd).
-static const float KX_OVER_L = 0.05f;   // Centering bias gain (mm^-1).
-static const float ERR_PAR_OK = 0.15f;  //Consider "aligned".
+static const float V_FAST = 0.32f;      // Forward command in [-1,1].
+static const float K_THETA = 1.10f;     // Corridor parallel gain (rad -> cmd).
+static const float KX_OVER_L = 0.02f;   // Centering bias gain (mm^-1).
+static const float ERR_PAR_OK = 0.2f;   //Consider "aligned".
 static const float FRONT_STOP = 100.0f; // Stop and turn if front < this (mm).
 static const float FRONT_GO = 130.0f;   // Resume straight if front > this (mm).
 static const float FRONT_INVALID = 15.0f; // Treat tiny/invalid as no wall.
-static const float DHEADING_STEP = 0.22f; // Max heading nudge per tick (rad).
+static const float DHEADING_STEP = 0.12f; // Max heading nudge per tick (rad).
 
 /** Private functions. ********************************************************/
 
