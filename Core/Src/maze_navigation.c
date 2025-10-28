@@ -27,14 +27,18 @@ volatile float position_error_mm_calc = 0;
 static mode_t mode = STRAIGHT;
 
 // Calibrations.
-static const float V_FAST = 0.32f;      // Forward command in [-1,1].
-static const float K_THETA = 1.10f;     // Corridor parallel gain (rad -> cmd).
-static const float KX_OVER_L = 0.02f;   // Centering bias gain (mm^-1).
-static const float ERR_PAR_OK = 0.2f;   //Consider "aligned".
-static const float FRONT_STOP = 100.0f; // Stop and turn if front < this (mm).
-static const float FRONT_GO = 130.0f;   // Resume straight if front > this (mm).
+static const float V_FAST = 0.32f;     // Forward command in [-1,1].
+static const float K_THETA = 1.10f;    // Corridor parallel gain (rad -> cmd).
+static const float KX_OVER_L = 0.02f;  // Centering bias gain (mm^-1).
+static const float ERR_PAR_OK = 0.17f; //Consider "aligned".
+static const float FRONT_STOP = 50.0f; // Stop and turn if front < this (mm).
+static const float FRONT_GO = 100.0f;  // Resume straight if front > this (mm).
 static const float FRONT_INVALID = 15.0f; // Treat tiny/invalid as no wall.
 static const float DHEADING_STEP = 0.12f; // Max heading nudge per tick (rad).
+
+// Tank-turn step.
+static const float DHEADING_STEP_POINT_TURN =
+    0.48f; // rad per tick during TURN.
 
 /** Private functions. ********************************************************/
 
@@ -103,14 +107,17 @@ void maze_control_step(void) {
   } break;
 
   case TURN: {
+    // Pure point/tank turn, no forward motion.
     v = 0.0f;
 
     // Spin-in-place by nudging heading setpoint steadily.
-    const float turn_dir = (dR >= dL) ? +1.0f : -1.0f;
-    dpsi = turn_dir * DHEADING_STEP; // Constant-rate spin.
+    const float turn_dir = (dL >= dR) ? +1.0f : -1.0f;
+
+    // Steady heading nudge for pivot.
+    dpsi = turn_dir * DHEADING_STEP_POINT_TURN;
     set_relative_heading(dpsi);
 
-    // Exit when aligned & front is clear (or front invalid).
+    // Exit when aligned and the front is clear (or front invalid).
     if (fabsf(heading_error_rad_calc) < ERR_PAR_OK &&
         (dF > FRONT_GO || dF < FRONT_INVALID)) {
       mode = STRAIGHT;
