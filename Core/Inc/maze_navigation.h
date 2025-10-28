@@ -13,6 +13,7 @@ extern volatile float heading_error_rad_calc;
 
 /** Public functions. *********************************************************/
 
-float heading_error_rad(float left_mm, float right_mm, float angle_rad);
+float heading_error_rad(float left_mm, float right_mm, float angle_rad,
+                        float width_mm);
 
 #endif
