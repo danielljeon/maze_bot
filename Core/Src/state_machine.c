@@ -108,12 +108,10 @@ void run_state_machine(void) {
     break;
 
   case STATE_CENTER_MAZE:
-    const float error_heading_rad =
-        heading_error_rad(vl53l4cd_distance_mm[0], vl53l4cd_distance_mm[2],
-                          MAZE_BOT_TOF_ANGLE_RAD);
-    const float error_heading_direction =
-        vl53l4cd_distance_mm[0] > vl53l4cd_distance_mm[2] ? +1.0f : -1.0f;
-    heading_error_rad_calc = error_heading_direction * error_heading_rad;
+    heading_error_rad_calc = heading_error_rad(
+        (float)vl53l4cd_distance_mm[0] + MAZE_BOT_TOF_LEFT_RIGHT_OFFSET_MM,
+        (float)vl53l4cd_distance_mm[2] + MAZE_BOT_TOF_LEFT_RIGHT_OFFSET_MM,
+        MAZE_BOT_TOF_ANGLE_RAD, MAZE_BOT_NOMINAL_MAZE_WIDTH_MM);
 
     set_relative_heading(heading_error_rad_calc);
 
