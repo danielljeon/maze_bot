@@ -10,6 +10,7 @@
 /** Public variables. *********************************************************/
 
 extern volatile float heading_error_rad_calc;
+extern volatile float position_error_mm_calc;
 
 /** Public functions. *********************************************************/
 
@@ -39,13 +40,44 @@ extern volatile float heading_error_rad_calc;
  *
  * @param left_mm Distance (mm) from the left ToF sensor to the wall.
  * @param right_mm Distance (mm) from the right ToF sensor to the wall.
- * @param angle_rad Mounting angle (radians) of each sensor relative to the
- *                  robot's forward axis.
+ * @param angle_rad Angle (radians) of each sensor from the forward axis.
  * @param width_mm Distance (mm) between the two sensors (robot width).
  *
  * @return Heading error in radians (positive CCW from forward to wall normal).
  */
 float heading_error_rad(float left_mm, float right_mm, float angle_rad,
                         float width_mm);
+
+/**
+ * @brief Computes the robot's lateral offset (centering error) in a corridor.
+ *
+ * The function computes how far the robot is displaced from the corridor
+ * centerline, assuming two side-mounted distance sensors are angled outward by
+ * `alpha_rad` relative to the robot's forward axis and are roughly parallel to
+ * the corridor walls.
+ *
+* Geometry reference:
+ *  - Sensor mounting angle: +- angle_rad from forward.
+ *  - Measured distances: left_mm, right_mm.
+ *  - The perpendicular wall distances are d*sin(alpha).
+ *  - The offset from the corridor centerline is half the difference between.
+ *
+ * Formula:
+ *    x_err = 0.5 * (d_left_mm - d_right_mm) * sin(alpha_rad)
+ *
+ * Sign convention:
+ *  - Positive x_err indicates the robot is left of the corridor center (left
+ *    wall closer).
+*   - Negative x_err indicates the robot is right of the corridor center (right
+ *    wall closer).
+ *  - Zero x_err is the center.
+ *
+ * @param d_left_mm Distance (mm) from the left side sensor to its wall.
+ * @param d_right_mm Distance (mm) from the right side sensor to its wall.
+ * @param alpha_rad Angle (radians) of each sensor from the forward axis.
+ *
+ * @return Lateral offset (mm) of the robot from the corridor centerline.
+ */
+float position_error_mm(float d_left_mm, float d_right_mm, float alpha_rad);
 
 #endif

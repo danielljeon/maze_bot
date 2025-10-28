@@ -12,6 +12,7 @@
 /** Public variables. *********************************************************/
 
 volatile float heading_error_rad_calc = 0;
+volatile float position_error_mm_calc = 0;
 
 /** Public functions. *********************************************************/
 
@@ -28,4 +29,9 @@ float heading_error_rad(const float left_mm, const float right_mm,
 
   // Signed heading error, angle from +Y (forward) to wall normal (CCW+).
   return atan2f(num, den);
+}
+
+float position_error_mm(const float d_left_mm, const float d_right_mm,
+                        const float alpha_rad) {
+  return 0.5f * (d_left_mm - d_right_mm) * sinf(alpha_rad);
 }

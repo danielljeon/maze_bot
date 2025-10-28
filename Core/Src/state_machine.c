@@ -111,6 +111,9 @@ void run_state_machine(void) {
     heading_error_rad_calc = heading_error_rad(
         vl53l4cd_distance_mm[0], vl53l4cd_distance_mm[2],
         MAZE_BOT_TOF_ANGLE_RAD, MAZE_BOT_TOF_WIDTH_SPACING_MM);
+    position_error_mm_calc =
+        position_error_mm(vl53l4cd_distance_mm[0], vl53l4cd_distance_mm[2],
+                          MAZE_BOT_TOF_ANGLE_RAD);
 
     set_relative_heading(heading_error_rad_calc);
 
