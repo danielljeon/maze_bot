@@ -7,10 +7,22 @@
 /** Includes. *****************************************************************/
 
 #include "vl53l4cd_runner.h"
+#include "configuration.h"
 
 /** Public variables. *********************************************************/
 
 uint16_t vl53l4cd_distance_mm[3] = {0, 0, 0};
+
+#ifdef MAZE_BOT_VL53L4CD_PUBLIC_DIRECT_VAR
+uint16_t vl53l4cd_distance_mm_1;
+uint16_t vl53l4cd_distance_mm_2;
+uint16_t vl53l4cd_distance_mm_3;
+static uint16_t *vl53l4cd_distance_public_mm[3] = {
+    &vl53l4cd_distance_mm_1,
+    &vl53l4cd_distance_mm_2,
+    &vl53l4cd_distance_mm_3,
+};
+#endif
 
 /** Private variables. ********************************************************/
 
@@ -136,6 +148,11 @@ void vl53l4cd_process(void) {
 
       if (status == VL53L4CD_ERROR_NONE) {
         vl53l4cd_distance_mm[i] = ((uint16_t)data_read[0] << 8) | data_read[1];
+
+#ifdef MAZE_BOT_VL53L4CD_PUBLIC_DIRECT_VAR
+        *vl53l4cd_distance_public_mm[i] =
+            ((uint16_t)data_read[0] << 8) | data_read[1];
+#endif
 
         VL53L4CD_ClearInterrupt(vl53l4cd_dev + i * 2);
       } else {
