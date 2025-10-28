@@ -23,6 +23,9 @@ static Dev_t vl53l4cd_dev = VL53L4CD_DEVICE_ADDRESS + 2;
 // n. VL53L4CD_DEVICE_ADDRESS + (2 * n)
 // 7-bit I2C addresses (left shift by 1) so must increment by 2.
 
+// 1 of 3 VL53L4CDs do not have the XSHUT, it will be assigned new address of
+// (VL53L4CD_DEVICE_ADDRESS + 2) first. Then, the remaining XSHUT pins below
+// will be enabled from index 0 onwards. See the edge case initialization note.
 static GPIO_TypeDef *vl53l4cd_xshut_ports[2] = {VL53L4CD_XSHUT_PORT_2,
                                                 VL53L4CD_XSHUT_PORT};
 static uint16_t vl53l4cd_xshut_pins[2] = {VL53L4CD_XSHUT_PIN_2,
@@ -64,6 +67,7 @@ int8_t vl53l4cd_init(void) {
     HAL_GPIO_WritePin(vl53l4cd_xshut_ports[i], vl53l4cd_xshut_pins[i],
                       GPIO_PIN_RESET);
   }
+  HAL_Delay(5);
 
   for (uint8_t i = 0; i < device_count; i++) {
     // Entry.
@@ -71,22 +75,38 @@ int8_t vl53l4cd_init(void) {
       HAL_GPIO_WritePin(vl53l4cd_xshut_ports[i - 1], vl53l4cd_xshut_pins[i - 1],
                         GPIO_PIN_SET);
     }
-    HAL_Delay(100);
+    HAL_Delay(10);
 
     // Get sensor ID.
     uint16_t sensor_id = 0;
     status = (int8_t)VL53L4CD_GetSensorId(VL53L4CD_DEVICE_ADDRESS, &sensor_id);
 
-    if (sensor_id != VL53L4CD_SENSOR_ID) {
-      return status;
+    if (sensor_id == VL53L4CD_SENSOR_ID) {
+      // Initialize the sensor.
+      status = (int8_t)VL53L4CD_SensorInit(VL53L4CD_DEVICE_ADDRESS);
+
+      // Update the I2C address.
+      status =
+          VL53L4CD_SetI2CAddress(VL53L4CD_DEVICE_ADDRESS, vl53l4cd_dev + i * 2);
+
+    } else {
+      // Handle edge case: 1 of 3 VL53L4CDs do not have XSHUT. If the program
+      // has already been run, a new address (VL53L4CD_DEVICE_ADDRESS + 2) would
+      // have already been assigned. Try VL53L4CD_DEVICE_ADDRESS + 2.
+      if (sensor_id) {
+        status = (int8_t)VL53L4CD_GetSensorId(VL53L4CD_DEVICE_ADDRESS + 2,
+                                              &sensor_id);
+
+        // If both the default (VL53L4CD_DEVICE_ADDRESS) and edge case
+        // (VL53L4CD_DEVICE_ADDRESS + 2) address failed, return error status.
+        if (sensor_id != VL53L4CD_SENSOR_ID) {
+          return status;
+        }
+
+        // Initialize the sensor.
+        status = (int8_t)VL53L4CD_SensorInit(VL53L4CD_DEVICE_ADDRESS + 2);
+      }
     }
-
-    // Initialize the sensor.
-    status = (int8_t)VL53L4CD_SensorInit(VL53L4CD_DEVICE_ADDRESS);
-
-    // Update the I2C address.
-    status =
-        VL53L4CD_SetI2CAddress(VL53L4CD_DEVICE_ADDRESS, vl53l4cd_dev + i * 2);
     HAL_Delay(1);
   }
 
