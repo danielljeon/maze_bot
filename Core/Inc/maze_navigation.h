@@ -80,4 +80,9 @@ float heading_error_rad(float left_mm, float right_mm, float angle_rad,
  */
 float position_error_mm(float d_left_mm, float d_right_mm, float alpha_rad);
 
+/**
+ * @brief Maze control step cycle.
+ */
+void maze_control_step(void);
+
 #endif
