@@ -14,12 +14,13 @@
 /** Configuration definitions. ************************************************/
 
 // Maze navigation related constraints.
-#define MAZE_BOT_NOMINAL_MAZE_WIDTH_MM 155.0f
-#define MAZE_BOT_TOF_ANGLE_RAD (0.25f * M_PI)
+#define MAZE_BOT_NOMINAL_MAZE_WIDTH_MM 178.0f
+#define MAZE_BOT_TOF_ANGLE_RAD (0.85f)
+#define MAZE_BOT_TOF_LEFT_RIGHT_OFFSET_MM 36.0f
 
 // Dev related features:
 
 // Define to use direct public TOF (distance_mm) data.
-// #define MAZE_BOT_VL53L4CD_PUBLIC_DIRECT_VAR
+#define MAZE_BOT_VL53L4CD_PUBLIC_DIRECT_VAR
 
 #endif

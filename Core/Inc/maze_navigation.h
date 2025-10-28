@@ -7,6 +7,10 @@
 #ifndef MAZE_BOT__MAZE_NAVIGATION_H
 #define MAZE_BOT__MAZE_NAVIGATION_H
 
+/** Public variables. *********************************************************/
+
+extern volatile float heading_error_rad_calc;
+
 /** Public functions. *********************************************************/
 
 float heading_error_rad(float left_mm, float right_mm, float angle_rad);

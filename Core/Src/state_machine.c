@@ -8,9 +8,11 @@
 
 #include "state_machine.h"
 
+#include "configuration.h"
 #include "controls.h"
 #include "drive.h"
 #include "h_bridge_control.h"
+#include "maze_navigation.h"
 #include "servo_control.h"
 #include "stm32l4xx_hal.h"
 #include "vl53l4cd_runner.h"
@@ -31,10 +33,7 @@ static uint16_t state_standby_counter = 0;
 uint8_t playbook_index = 0;
 state_t playbook[STATE_MACHINE_PLAYBOOK_COUNT] = {
     STATE_MACHINE_INITIAL_STATE,
-    STATE_STANDBY,
-    STATE_TURN,
-    STATE_ADVANCE,
-    STATE_DROP_PACKAGE,
+    STATE_CENTER_MAZE,
     STATE_MACHINE_FINAL_STATE,
 };
 
@@ -108,7 +107,17 @@ void run_state_machine(void) {
 
     break;
 
-  case STATE_MOMENTARY_SENSE:
+  case STATE_CENTER_MAZE:
+    const float error_heading_rad =
+        heading_error_rad(vl53l4cd_distance_mm[0], vl53l4cd_distance_mm[2],
+                          MAZE_BOT_TOF_ANGLE_RAD);
+    const float error_heading_direction =
+        vl53l4cd_distance_mm[0] > vl53l4cd_distance_mm[2] ? +1.0f : -1.0f;
+    heading_error_rad_calc = error_heading_direction * error_heading_rad;
+
+    set_relative_heading(heading_error_rad_calc);
+
+    // next_state(); // TODO IMPLEMENT TRANSITION CONDITION
     break;
 
   case STATE_TURN:
