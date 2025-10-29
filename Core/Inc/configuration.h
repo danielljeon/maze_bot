@@ -14,7 +14,7 @@
 /** Configuration definitions. ************************************************/
 
 // Maze navigation related constraints.
-#define MAZE_BOT_TOF_WIDTH_SPACING_MM 52.0f
+#define MAZE_BOT_TOF_WIDTH_SPACING_MM 115.0f
 #define MAZE_BOT_TOF_ANGLE_RAD 0.7853982f // 45 deg.
 
 // Dev related features:
