@@ -30,15 +30,18 @@ static mode_t mode = STRAIGHT;
 static const float V_FAST = 0.32f;     // Forward command in [-1,1].
 static const float K_THETA = 1.10f;    // Corridor parallel gain (rad -> cmd).
 static const float KX_OVER_L = 0.02f;  // Centering bias gain (mm^-1).
-static const float ERR_PAR_OK = 0.17f; //Consider "aligned".
+static const float ERR_PAR_OK = 0.17f; // Consider "aligned".
 static const float FRONT_STOP = 50.0f; // Stop and turn if front < this (mm).
+static const float SIDE_STOP = 65.0f;  // Stop and turn if sides < this (mm).
 static const float FRONT_GO = 100.0f;  // Resume straight if front > this (mm).
-static const float FRONT_INVALID = 15.0f; // Treat tiny/invalid as no wall.
 static const float DHEADING_STEP = 0.12f; // Max heading nudge per tick (rad).
+static const uint16_t MIN_STRAIGHT_TICKS = 15; // Minimum ticks in STRAIGHT.
 
 // Tank-turn step.
-static const float DHEADING_STEP_POINT_TURN =
-    0.48f; // rad per tick during TURN.
+static const float DHEADING_STEP_POINT_TURN = 0.48f; // rad per tick in TURN.
+
+// Minimum ticks in state counters.
+static uint16_t straight_counter = 0;
 
 /** Private functions. ********************************************************/
 
@@ -100,8 +103,14 @@ void maze_control_step(void) {
 
     set_relative_heading(dpsi); // Call for heading controller to take control.
 
+    // Update straight counter to ensure minimum straight travel time.
+    if (straight_counter <= MIN_STRAIGHT_TICKS) {
+      straight_counter++;
+    }
+
     // Corner detection.
-    if (dF > FRONT_INVALID && dF < FRONT_STOP) {
+    if ((dL < SIDE_STOP || dF < FRONT_STOP || dR < SIDE_STOP) &&
+        straight_counter > MIN_STRAIGHT_TICKS) {
       mode = TURN;
     }
   } break;
@@ -118,8 +127,8 @@ void maze_control_step(void) {
     set_relative_heading(dpsi);
 
     // Exit when aligned and the front is clear (or front invalid).
-    if (fabsf(heading_error_rad_calc) < ERR_PAR_OK &&
-        (dF > FRONT_GO || dF < FRONT_INVALID)) {
+    if (fabsf(heading_error_rad_calc) < ERR_PAR_OK && (dF > FRONT_GO)) {
+      straight_counter = 0;
       mode = STRAIGHT;
     }
   } break;
