@@ -27,15 +27,14 @@ volatile float position_error_mm_calc = 0;
 static mode_t mode = STRAIGHT;
 
 // Calibrations.
-static const float V_FAST = 0.32f;     // Forward command in [-1,1].
-static const float K_THETA = 1.10f;    // Corridor parallel gain (rad -> cmd).
-static const float KX_OVER_L = 0.02f;  // Centering bias gain (mm^-1).
-static const float ERR_PAR_OK = 0.17f; // Consider "aligned".
-static const float FRONT_STOP = 50.0f; // Stop and turn if front < this (mm).
-static const float SIDE_STOP = 65.0f;  // Stop and turn if sides < this (mm).
-static const float FRONT_GO = 100.0f;  // Resume straight if front > this (mm).
-static const float DHEADING_STEP = 0.12f; // Max heading nudge per tick (rad).
-static const uint16_t MIN_STRAIGHT_TICKS = 15; // Minimum ticks in STRAIGHT.
+static const float V_FAST = 0.2f;       // Forward command in [-1,1].
+static const float K_THETA = 1.10f;     // Corridor parallel gain (rad -> cmd).
+static const float KX_OVER_L = 0.02f;   // Centering bias gain (mm^-1).
+static const float ERR_PAR_OK = 0.17f;  // Consider "aligned".
+static const float FRONT_STOP = 100.0f; // Stop and turn if front < this (mm).
+static const float FRONT_GO = 165.0f;   // Resume straight if front > this (mm).
+static const float DHEADING_STEP = 0.25f; // Max heading nudge per tick (rad).
+static const uint16_t MIN_STRAIGHT_TICKS = 200; // Minimum ticks in STRAIGHT.
 
 // Tank-turn step.
 static const float DHEADING_STEP_POINT_TURN = 0.48f; // rad per tick in TURN.
@@ -66,6 +65,20 @@ float heading_error_rad(const float left_mm, const float right_mm,
   return atan2f(num, den);
 }
 
+static float corridor_parallel_error_rad(const float dL, const float dR,
+                                         const float alpha,
+                                         const float robot_w) {
+  const float s = sinf(alpha), c = cosf(alpha);
+  const float vx = robot_w + (dL + dR) * s; // Across corridor.
+  const float vy = (dR - dL) * c;           // Along corridor.
+  float e = atan2f(vx, vy) - (float)M_PI_2;
+  while (e > M_PI)
+    e -= 2.0f * (float)M_PI;
+  while (e <= -M_PI)
+    e += 2.0f * (float)M_PI;
+  return e;
+}
+
 float position_error_mm(const float d_left_mm, const float d_right_mm,
                         const float alpha_rad) {
   return 0.5f * (d_left_mm - d_right_mm) * sinf(alpha_rad);
@@ -79,7 +92,7 @@ void maze_control_step(void) {
   const float robot_w = MAZE_BOT_TOF_WIDTH_SPACING_MM;
 
   // Corridor errors for straights.
-  heading_error_rad_calc = heading_error_rad(dL, dR, alpha, robot_w);
+  heading_error_rad_calc = corridor_parallel_error_rad(dL, dR, alpha, robot_w);
   position_error_mm_calc = position_error_mm(dL, dR, alpha);
 
   float v = 0.0f;    // Forward command.
@@ -101,7 +114,9 @@ void maze_control_step(void) {
 
     dpsi = steer; // Nudge setpoint by this much.
 
-    set_relative_heading(dpsi); // Call for heading controller to take control.
+    set_relative_heading(
+        dpsi *
+        DHEADING_STEP_POINT_TURN); // Call for heading controller to take control.
 
     // Update straight counter to ensure minimum straight travel time.
     if (straight_counter <= MIN_STRAIGHT_TICKS) {
@@ -109,8 +124,7 @@ void maze_control_step(void) {
     }
 
     // Corner detection.
-    if ((dL < SIDE_STOP || dF < FRONT_STOP || dR < SIDE_STOP) &&
-        straight_counter > MIN_STRAIGHT_TICKS) {
+    if (dF < FRONT_STOP && straight_counter > MIN_STRAIGHT_TICKS) {
       mode = TURN;
     }
   } break;
