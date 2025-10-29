@@ -33,11 +33,11 @@ static const float KX_OVER_L = 0.02f;   // Centering bias gain (mm^-1).
 static const float ERR_PAR_OK = 0.17f;  // Consider "aligned".
 static const float FRONT_STOP = 100.0f; // Stop and turn if front < this (mm).
 static const float FRONT_GO = 165.0f;   // Resume straight if front > this (mm).
-static const float DHEADING_STEP = 0.25f; // Max heading nudge per tick (rad).
 static const uint16_t MIN_STRAIGHT_TICKS = 200; // Minimum ticks in STRAIGHT.
 
 // Tank-turn step.
-static const float DHEADING_STEP_POINT_TURN = 0.48f; // rad per tick in TURN.
+static const float DHEADING_STEP_MAX = 0.25f;        // Max heading nudge (rad).
+static const float DHEADING_STEP_MULTIPLIER = 0.48f; // Step multipler.
 
 // Minimum ticks in state counters.
 static uint16_t straight_counter = 0;
@@ -107,16 +107,15 @@ void maze_control_step(void) {
         K_THETA * heading_error_rad_calc + KX_OVER_L * position_error_mm_calc;
 
     // Rate-limit the nudge so the outer PID can track smoothly.
-    if (steer > DHEADING_STEP)
-      steer = DHEADING_STEP;
-    if (steer < -DHEADING_STEP)
-      steer = -DHEADING_STEP;
+    if (steer > DHEADING_STEP_MAX)
+      steer = DHEADING_STEP_MAX;
+    if (steer < -DHEADING_STEP_MAX)
+      steer = -DHEADING_STEP_MAX;
 
     dpsi = steer; // Nudge setpoint by this much.
 
     set_relative_heading(
-        dpsi *
-        DHEADING_STEP_POINT_TURN); // Call for heading controller to take control.
+        dpsi * DHEADING_STEP_MULTIPLIER); // Call for heading controller.
 
     // Update straight counter to ensure minimum straight travel time.
     if (straight_counter <= MIN_STRAIGHT_TICKS) {
@@ -137,7 +136,7 @@ void maze_control_step(void) {
     const float turn_dir = (dL >= dR) ? +1.0f : -1.0f;
 
     // Steady heading nudge for pivot.
-    dpsi = turn_dir * DHEADING_STEP_POINT_TURN;
+    dpsi = turn_dir * DHEADING_STEP_MAX;
     set_relative_heading(dpsi);
 
     // Exit when aligned and the front is clear (or front invalid).
