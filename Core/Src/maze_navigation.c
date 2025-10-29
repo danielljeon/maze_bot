@@ -15,7 +15,7 @@
 
 /** Public types. *************************************************************/
 
-typedef enum { STRAIGHT, TURN } mode_t;
+typedef enum { IDLE, STRAIGHT, TURN } mode_t;
 
 /** Public variables. *********************************************************/
 
@@ -24,7 +24,8 @@ volatile float position_error_mm_calc = 0;
 
 /** Private variables. ********************************************************/
 
-static mode_t mode = STRAIGHT;
+static mode_t mode = IDLE;
+static uint8_t state_standby_counter = 0;
 
 // Calibrations.
 static const float V_FAST = 0.2f;       // Forward command in [-1,1].
@@ -99,6 +100,19 @@ void maze_control_step(void) {
   float dpsi = 0.0f; // Small heading increment for this tick.
 
   switch (mode) {
+
+  case IDLE:
+
+    if (state_standby_counter > 10) {
+      // Initialize startup controls.
+      zero_heading();
+      mode = STRAIGHT;
+
+    } else if (vl53l4cd_distance_mm[1] > 200) { // Ensure middle TOF clear.
+      state_standby_counter++;
+    }
+    break;
+
   case STRAIGHT: {
     v = V_FAST;
 
