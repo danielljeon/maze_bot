@@ -15,7 +15,7 @@
 
 /** Public types. *************************************************************/
 
-typedef enum { IDLE, STRAIGHT, TURN, SETTLING } mode_t;
+typedef enum { IDLE, STANDBY, STRAIGHT, TURN, SETTLING } mode_t;
 
 /** Public variables. *********************************************************/
 
@@ -24,28 +24,33 @@ volatile float position_error_mm_calc = 0;
 
 /** Private variables. ********************************************************/
 
-static mode_t mode = IDLE;
-static uint8_t state_standby_counter = 0;
+static mode_t mode = STANDBY;
 
 // Calibrations.
 static const float V_FAST = 0.2f;      // Forward command in [-1,1].
 static const float K_THETA = 1.10f;    // Corridor parallel gain (rad -> cmd).
 static const float KX_OVER_L = 0.02f;  // Centering bias gain (mm^-1).
 static const float ERR_PAR_OK = 0.17f; // Consider "aligned".
-static const uint16_t MIN_STRAIGHT_TICKS = 30; // Minimum ticks in STRAIGHT.
 
-// Turn state calibrations.
+// Heading nudge calibrations.
+static const float DHEADING_STEP_MAX = 0.25f;        // Max heading nudge (rad).
+static const float DHEADING_STEP_MULTIPLIER = 0.48f; // Step multiplier.
+
+// IDLE state calibrations.
+static const float STANDBY_TICKS = 100.0f; // Ticks for standby duration.
+static uint8_t state_standby_counter = 0;
+
+// STRAIGHT state calibrations.
+static const uint16_t MIN_STRAIGHT_TICKS = 30; // Minimum ticks in STRAIGHT.
+static uint16_t straight_counter = 0; // Minimum ticks in state counters.
+
+// TURN state calibrations.
 static const float FRONT_STOP = 100.0f; // Stop and turn if front < this (mm).
 static const float FRONT_GO = 165.0f;   // Resume straight if front > this (mm).
-static const float DHEADING_STEP_MAX = 0.25f;        // Max heading nudge (rad).
-static const float DHEADING_STEP_MULTIPLIER = 0.48f; // Step multipler.
 
-// Settling state calibrations.
+// SETTLING state calibrations.
 static const uint16_t SETTLING_TICKS = 100; // Settle after turn.
 static uint16_t settling_tick_counter = 0;
-
-// Minimum ticks in state counters.
-static uint16_t straight_counter = 0;
 
 /** Private functions. ********************************************************/
 
@@ -96,7 +101,7 @@ void maze_control_step(void) {
   const float alpha = MAZE_BOT_TOF_ANGLE_RAD;
   const float robot_w = MAZE_BOT_TOF_WIDTH_SPACING_MM;
 
-  // Corridor errors for straights.
+  // Corridor errors.
   heading_error_rad_calc = corridor_parallel_error_rad(dL, dR, alpha, robot_w);
   position_error_mm_calc = position_error_mm(dL, dR, alpha);
 
@@ -106,13 +111,16 @@ void maze_control_step(void) {
   switch (mode) {
 
   case IDLE:
+    break;
+
+  case STANDBY:
 
     if (state_standby_counter > 10) {
       // Initialize startup controls.
       zero_heading();
       mode = STRAIGHT;
 
-    } else if (vl53l4cd_distance_mm[1] > 200) { // Ensure middle TOF clear.
+    } else if (dF > STANDBY_TICKS) { // Ensure middle TOF clear.
       state_standby_counter++;
     }
     break;
@@ -138,8 +146,8 @@ void maze_control_step(void) {
       dpsi = steer; // Nudge setpoint by this much.
     }
 
-    set_relative_heading(
-        dpsi * DHEADING_STEP_MULTIPLIER); // Call for heading controller.
+    // Set controls setpoint (heading controller).
+    set_relative_heading(dpsi * DHEADING_STEP_MULTIPLIER);
 
     // Corner detection.
     if (dF < FRONT_STOP) {
@@ -155,9 +163,8 @@ void maze_control_step(void) {
     // Spin-in-place by nudging heading setpoint steadily.
     const float turn_dir = (dL >= dR) ? +1.0f : -1.0f;
 
-    // Steady heading nudge for pivot.
-    dpsi = turn_dir * DHEADING_STEP_MULTIPLIER;
-    set_relative_heading(dpsi);
+    // Set controls setpoint (heading controller).
+    set_relative_heading(turn_dir * DHEADING_STEP_MULTIPLIER);
 
     // Exit when aligned and the front is clear (or front invalid).
     if (fabsf(heading_error_rad_calc) < ERR_PAR_OK && (dF > FRONT_GO)) {
