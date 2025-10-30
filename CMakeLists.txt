@@ -63,7 +63,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         Core/Src/scheduler.c
         Core/Src/servo_control.c
         Core/Src/sh2_hal_spi.c
-        Core/Src/state_machine.c
         Core/Src/vl53l4cd_runner.c
         Core/VL53L4CD_ULD_Driver/platform.c
         Core/VL53L4CD_ULD_Driver/VL53L4CD_api.c
