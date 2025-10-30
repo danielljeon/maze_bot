@@ -147,6 +147,7 @@ static void sensor_report_handler(void *cookie, sh2_SensorEvent_t *pEvent) {
     bno085_game_quaternion_j = value.un.gameRotationVector.j;
     bno085_game_quaternion_k = value.un.gameRotationVector.k;
     bno085_game_quaternion_real = value.un.gameRotationVector.real;
+    break;
   case SH2_GYROSCOPE_CALIBRATED:
     bno085_gyro_x = value.un.gyroscope.x;
     bno085_gyro_y = value.un.gyroscope.y;
