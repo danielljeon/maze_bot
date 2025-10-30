@@ -58,11 +58,8 @@ static float wrap_pi(float a) {
   return a;
 }
 
-// "Game" yaw (arbitrary at boot; no magnetometer).
-static float yaw_game(void) { return quat_to_yaw(); }
-
 // Local yaw (relative to our chosen zero).
-static float yaw_local(void) { return wrap_pi(yaw_game() - yaw_zero); }
+static float yaw_local(void) { return wrap_pi(quat_to_yaw() - yaw_zero); }
 
 // Inverse kinematics and motor control.
 static void actuate(void) {
@@ -75,13 +72,14 @@ static void actuate(void) {
     return;
   }
 
-  h_bridge_1_yaw_control = TURN_SIGN_POSITIVE_LEFT ? tc : -tc;
-  h_bridge_2_yaw_control = TURN_SIGN_POSITIVE_LEFT ? -tc : tc;
+  // H-bridge 1 is left, 2 is right. Turn convention: CCW = +ive, CW = -ive.
+  h_bridge_1_yaw_control = tc;
+  h_bridge_2_yaw_control = -tc;
 }
 
 /** Public functions. *********************************************************/
 
-void zero_heading(void) { yaw_zero = yaw_game(); }
+void zero_heading(void) { yaw_zero = quat_to_yaw(); }
 
 // Relative heading from current local yaw.
 void set_relative_heading(const float delta_rad) {
