@@ -78,9 +78,9 @@ Terrain and maze solving robot for mechatronics design university course
 | PA10        | `I2C1_SDA`              |                                | VL53L4CD Pin 9: `SDA`            |                           |
 | PB4         | `GPIO_EXTI4`            | Hardware pull-up, falling edge | VL53L4CD (1 of 3) Pin 7: `GPIO1` |                           |
 | PB5         | `GPIO_Output`           | Hardware pull-up               | VL53L4CD (1 of 3) Pin 5: `XSHUT` |                           |
-|             |                         | Hardware pull-up, falling edge | VL53L4CD (2 of 3) Pin 7: `GPIO1` |                           |
+|             |                         |                                | VL53L4CD (2 of 3) Pin 7: `GPIO1` |                           |
 | PA3         | `GPIO_Output`           | Hardware pull-up               | VL53L4CD (2 of 3) Pin 5: `XSHUT` |                           |
-|             |                         | Hardware pull-up               | VL53L4CD (3 of 3) Pin 7: `GPIO1` |                           |
+|             |                         |                                | VL53L4CD (3 of 3) Pin 7: `GPIO1` |                           |
 |             |                         | Hardware pull-up               | VL53L4CD (3 of 3) Pin 5: `XSHUT` |                           |
 | PA8         | `TIM1_CH1`              | PWM output                     | TB6612FNG Board Pin x: `PWMA`    |                           |
 | PA11        | `TIM1_CH4`              | PWM output                     | TB6612FNG Board Pin x: `PWMB`    |                           |
