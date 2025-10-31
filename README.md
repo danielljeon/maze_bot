@@ -35,7 +35,7 @@ Terrain and maze solving robot for mechatronics design university course
 |--------------------------|--------------------------------------|--------------------------------|---------:|-------|
 | NUCLEO-L432KC            | STMicroelectronics                   | 32-bit MCU Nucleo Dev Board    |        1 |       |
 | Adafruit BNO085 board    | CEVA Technologies, Inc. via Adafruit | 9-DOF IMU Adafruit board       |        1 |       |
-| Adafruit VL53L4CD board  | STMicroelectronics via Adafruit      | ToF Sensor Adafruit board      |        1 |       |
+| Adafruit VL53L4CD board  | STMicroelectronics via Adafruit      | ToF Sensor Adafruit board      |        3 |       |
 | TB6612FNG driver board   | Toshiba via (Various)                | Dual H-bridge driver board     |        1 |       |
 | Hobby servo              | (Various)                            | Generic PWM driven hobby servo |        1 |       |
 
