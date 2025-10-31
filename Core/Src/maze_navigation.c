@@ -27,14 +27,15 @@ volatile float position_error_mm_calc = 0;
 static mode_t mode = STANDBY;
 
 // Calibrations.
-static const float V_FAST = 0.2f;      // Forward command in [-1,1].
-static const float K_THETA = 1.10f;    // Corridor parallel gain (rad -> cmd).
-static const float KX_OVER_L = 0.02f;  // Centering bias gain (mm^-1).
-static const float ERR_PAR_OK = 0.17f; // Consider "aligned".
+static const float V_FAST = 0.25f;     // Forward command in [-1,1].
+static const float K_THETA = 1.20f;    // Corridor parallel gain (rad -> cmd).
+static const float KX_OVER_L = 0.04f;  // Centering bias gain (mm^-1).
+static const float ERR_PAR_OK = 0.16f; // Consider "aligned".
 
 // Heading nudge calibrations.
-static const float HEADING_STEP_MAX = 0.25f;        // Max heading nudge (rad).
-static const float HEADING_STEP_MULTIPLIER = 0.48f; // Step multiplier.
+static const float HEADING_STEP_MAX = 0.3f;         // Max heading nudge (rad).
+static const float HEADING_STEP_MULTIPLIER = 0.75f; // Step multiplier.
+static const float HEADING_STEP_TURN_STATE = 0.35f; // Heading nudge (rad).
 
 // IDLE state calibrations.
 static const float STANDBY_TICKS = 100.0f; // Ticks for standby duration.
@@ -45,11 +46,11 @@ static const uint16_t MIN_STRAIGHT_TICKS = 30; // Minimum ticks in STRAIGHT.
 static uint16_t straight_counter = 0; // Minimum ticks in state counters.
 
 // TURN state calibrations.
-static const float FRONT_STOP = 100.0f; // Stop and turn if front < this (mm).
-static const float FRONT_GO = 165.0f;   // Resume straight if front > this (mm).
+static const float FRONT_STOP = 60.0f; // Stop and turn if front < this (mm).
+static const float FRONT_GO = 100.0f;  // Resume straight if front > this (mm).
 
 // SETTLING state calibrations.
-static const uint16_t SETTLING_TICKS = 100; // Settle after turn.
+static const uint16_t SETTLING_TICKS = 10; // Settle after turn.
 static uint16_t settling_tick_counter = 0;
 
 /** Private functions. ********************************************************/
@@ -172,7 +173,7 @@ void maze_control_step(void) {
     const float turn_dir = left_mm >= right_mm ? +1.0f : -1.0f;
 
     // Set controls setpoint (heading controller).
-    set_relative_heading(turn_dir * HEADING_STEP_MULTIPLIER);
+    set_relative_heading(turn_dir * HEADING_STEP_TURN_STATE);
 
     // Exit when aligned and the front is clear (or front invalid).
     if (fabsf(heading_error_rad_calc) < ERR_PAR_OK && (front_mm > FRONT_GO)) {
