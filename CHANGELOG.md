@@ -8,7 +8,7 @@
 <!-- TOC -->
 * [Changelog](#changelog)
   * [v0.1.0 (2025-10-17)](#v010--2025-10-17-)
-  * [v0.2.0 (WIP)](#v020-wip)
+  * [v0.2.0 (2025-11-05)](#v020-2025-11-05)
 <!-- TOC -->
 
 </details>
@@ -19,8 +19,9 @@
 
 - Initial release (project Phase A).
 
-## v0.2.0 (WIP)
+## v0.2.0 (2025-11-05)
 
+- Second release (project Phase B).
 - Improve `README.md` documentation.
 - Swap to `TIM2` based scheduler (previously relied on DWT).
 - Fix pin configurations for NUCLEO-L432KC hardware (critical).
