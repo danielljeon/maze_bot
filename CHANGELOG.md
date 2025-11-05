@@ -19,7 +19,7 @@
 
 - Initial release (project Phase A).
 
-## v0.2.0 (2025-11-05)
+## [v0.2.0 (2025-11-05)](https://github.com/danielljeon/maze_bot/releases/tag/v0.2.0)
 
 - Second release (project Phase B).
 - Improve `README.md` documentation.
