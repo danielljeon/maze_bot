@@ -13,8 +13,10 @@
 
 /** Configuration definitions. ************************************************/
 
-// Maze navigation related constraints.
+// Width spacing from left side ToF to the right side ToF (mm).
 #define MAZE_BOT_TOF_WIDTH_SPACING_MM 115.0f
+
+// Angle from forward vector to the ToF view vector (rad).
 #define MAZE_BOT_TOF_ANGLE_RAD 0.7853982f // 45 deg.
 
 // Dev related features:
