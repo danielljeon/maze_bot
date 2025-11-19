@@ -31,13 +31,14 @@ Terrain and maze solving robot for mechatronics design university course
 
 ### 1.1 Bill of Materials (BOM)
 
-| Manufacturer Part Number | Manufacturer                         | Description                    | Quantity | Notes |
-|--------------------------|--------------------------------------|--------------------------------|---------:|-------|
-| NUCLEO-L432KC            | STMicroelectronics                   | 32-bit MCU Nucleo Dev Board    |        1 |       |
-| Adafruit BNO085 board    | CEVA Technologies, Inc. via Adafruit | 9-DOF IMU Adafruit board       |        1 |       |
-| Adafruit VL53L4CD board  | STMicroelectronics via Adafruit      | ToF Sensor Adafruit board      |        3 |       |
-| TB6612FNG driver board   | Toshiba via (Various)                | Dual H-bridge driver board     |        1 |       |
-| Hobby servo              | (Various)                            | Generic PWM driven hobby servo |        1 |       |
+| Manufacturer Part Number  | Manufacturer                         | Description                        | Quantity | Notes |
+|---------------------------|--------------------------------------|------------------------------------|---------:|-------|
+| NUCLEO-L432KC             | STMicroelectronics                   | 32-bit MCU Nucleo Dev Board        |        1 |       |
+| Adafruit BNO085 board     | CEVA Technologies, Inc. via Adafruit | 9-DOF IMU Adafruit board           |        1 |       |
+| Adafruit VL53L4CD board   | STMicroelectronics via Adafruit      | ToF Sensor Adafruit board          |        3 |       |
+| Adafruit TJA1051T/3 board | NXP USA Inc. via Adafruit            | CAN Bus Transceiver Adafruit Board |        1 |       |
+| TB6612FNG driver board    | Toshiba via (Various)                | Dual H-bridge driver board         |        1 |       |
+| Hobby servo               | (Various)                            | Generic PWM driven hobby servo     |        1 |       |
 
 ### 1.2 Block Diagram
 
@@ -74,21 +75,22 @@ Terrain and maze solving robot for mechatronics design university course
 | PB1         | `GPIO_Output`           | Set high                       | BNO085 Pin 6: `PS0/Wake`         | Pull low to trigger wake. |
 |             |                         | Hardware pull-up               | BNO085 Pin 5: `PS1`              |                           |
 | PA1         | `GPIO_Output`           | Set high                       | BNO085 Pin 11: `NRST`            | Pull low to reset.        |
+| PA11        | `CAN1_RX`               |                                | TJA1051T/3 Pin 1: `TXD`          |                           |
+| PA12        | `CAN1_TX`               |                                | TJA1051T/3 Pin 4: `RXD`          |                           |
 | PA9         | `I2C1_SCL`              |                                | VL53L4CD Pin 10: `SCL`           |                           |
 | PA10        | `I2C1_SDA`              |                                | VL53L4CD Pin 9: `SDA`            |                           |
 | PB4         | `GPIO_EXTI4`            | Hardware pull-up, falling edge | VL53L4CD (1 of 3) Pin 7: `GPIO1` |                           |
 | PB5         | `GPIO_Output`           | Hardware pull-up               | VL53L4CD (1 of 3) Pin 5: `XSHUT` |                           |
 |             |                         |                                | VL53L4CD (2 of 3) Pin 7: `GPIO1` |                           |
-| PA3         | `GPIO_Output`           | Hardware pull-up               | VL53L4CD (2 of 3) Pin 5: `XSHUT` |                           |
+| PB6         | `GPIO_Output`           | Hardware pull-up               | VL53L4CD (2 of 3) Pin 5: `XSHUT` |                           |
 |             |                         |                                | VL53L4CD (3 of 3) Pin 7: `GPIO1` |                           |
 |             |                         | Hardware pull-up               | VL53L4CD (3 of 3) Pin 5: `XSHUT` |                           |
-| PA8         | `TIM1_CH1`              | PWM output                     | TB6612FNG Board Pin x: `PWMA`    |                           |
-| PA11        | `TIM1_CH4`              | PWM output                     | TB6612FNG Board Pin x: `PWMB`    |                           |
-| PA12        | `GPIO_Output`           |                                | TB6612FNG Board Pin x: `DIR_A1`  |                           |
+| PA2         | `TIM15_CH1`             | PWM output                     | TB6612FNG Board Pin x: `PWMA`    |                           |
+| PA3         | `TIM15_CH2`             | PWM output                     | TB6612FNG Board Pin x: `PWMB`    |                           |
+| PA8         | `GPIO_Output`           |                                | TB6612FNG Board Pin x: `DIR_A1`  |                           |
 |             |                         | PA12 externally inverted       | TB6612FNG Board Pin x: `DIR_A2`  |                           |
 | PA0         | `GPIO_Output`           |                                | TB6612FNG Board Pin x: `DIR_B1`  |                           |
 |             |                         | PA0 externally inverted        | TB6612FNG Board Pin x: `DIR_B2`  |                           |
-| PA2         | `TIM15_CH1`             | PWM output                     | Hobby Servo Pin x: `PWM`         |                           |
 
 </details>
 
@@ -96,13 +98,9 @@ Terrain and maze solving robot for mechatronics design university course
 
 ```
 16 MHz High Speed External (HSI)
-↓
-Phase-Locked Loop Main (PLLM)
-↓
-80 MHz SYSCLK
-↓
-80 MHz HCLK
-↓
- → 80 MHz APB1 (Maxed) → 80 MHz APB1 Timer
- → 80 MHz APB2 (Maxed) → 80 MHz APB2 Timer
+ -> Phase-Locked Loop Main (PLLM)
+ -> 80 MHz SYSCLK
+ -> 80 MHz HCLK
+     -> 80 MHz APB1 (Maxed) -> 80 MHz APB1 Timer
+     -> 80 MHz APB2 (Maxed) -> 80 MHz APB2 Timer
 ```
