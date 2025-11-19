@@ -27,7 +27,6 @@
 #include "h_bridge_control.h"
 #include "maze_navigation.h"
 #include "scheduler.h"
-#include "servo_control.h"
 #include "vl53l4cd_runner.h"
 /* USER CODE END Includes */
 
@@ -138,8 +137,7 @@ int main(void)
   bno085_reset();
   bno085_init();
 
-  // Initialize motor drivers.
-  servo_command_init();
+  // Initialize motor driver.
   h_bridge_command_init();
 
   // Initialize control loops.

@@ -38,7 +38,6 @@ Terrain and maze solving robot for mechatronics design university course
 | Adafruit VL53L4CD board   | STMicroelectronics via Adafruit      | ToF Sensor Adafruit board          |        3 |       |
 | Adafruit TJA1051T/3 board | NXP USA Inc. via Adafruit            | CAN Bus Transceiver Adafruit Board |        1 |       |
 | TB6612FNG driver board    | Toshiba via (Various)                | Dual H-bridge driver board         |        1 |       |
-| Hobby servo               | (Various)                            | Generic PWM driven hobby servo     |        1 |       |
 
 ### 1.2 Block Diagram
 

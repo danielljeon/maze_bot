@@ -21,6 +21,8 @@ endif ()
 # Set the project name
 set(CMAKE_PROJECT_NAME maze_bot)
 
+# Include toolchain file
+include("cmake/gcc-arm-none-eabi.cmake")
 
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
@@ -59,7 +61,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         Core/Src/maze_navigation.c
         Core/Src/pid.c
         Core/Src/scheduler.c
-        Core/Src/servo_control.c
         Core/Src/sh2_hal_spi.c
         Core/Src/vl53l4cd_runner.c
         Core/VL53L4CD_ULD_Driver/platform.c
