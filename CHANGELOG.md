@@ -36,3 +36,8 @@
         - Move VL53L4CD I2C off PB6 and PB7 to PA9 and PA 10.
 - Update VL53L4CD driver for simplicity, triple TOF and concurrent sensor
   operation.
+
+## [v0.3.0 (TBD)](https://github.com/danielljeon/maze_bot/releases/tag/v0.3.0)
+
+- Third release (project Phase C).
+- Restructure for CAN bus utilization.
