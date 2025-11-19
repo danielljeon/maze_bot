@@ -13,20 +13,20 @@
 
 /** STM32 port and pin configs. ***********************************************/
 
-extern TIM_HandleTypeDef htim1;
+extern TIM_HandleTypeDef htim15;
 
 // PWM timer channel.
-#define H_BRIDGE_TIM htim1
+#define H_BRIDGE_TIM htim15
 
 #define H_BRIDGE_1_A_PORT GPIOA
-#define H_BRIDGE_1_A_PIN GPIO_PIN_12
+#define H_BRIDGE_1_A_PIN GPIO_PIN_8
 
 #define H_BRIDGE_2_A_PORT GPIOA
 #define H_BRIDGE_2_A_PIN GPIO_PIN_0
 
 /** Public variables. *********************************************************/
 
-extern volatile uint16_t tim_h_bridge_pwm[4];
+extern volatile uint16_t tim_h_bridge_pwm[2];
 
 /** Public functions. *********************************************************/
 

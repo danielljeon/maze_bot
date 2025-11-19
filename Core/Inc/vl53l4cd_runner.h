@@ -24,8 +24,8 @@
 
 // XSHUT defined for 2 out of 3, 1 out of 3 uses the default address.
 // GPIO for XSHUT.
-#define VL53L4CD_XSHUT_PORT_2 GPIOA
-#define VL53L4CD_XSHUT_PIN_2 GPIO_PIN_3
+#define VL53L4CD_XSHUT_PORT_2 GPIOB
+#define VL53L4CD_XSHUT_PIN_2 GPIO_PIN_6
 
 // GPIO for GPIO1 (interrupt).
 #define VL53L4CD_INT_PORT GPIOB
