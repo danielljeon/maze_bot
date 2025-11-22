@@ -55,9 +55,12 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         Core/sh2/shtp.c
         Core/Src/bno085_runner.c
         Core/Src/callbacks.c
+        Core/Src/can.c
         Core/Src/controls.c
         Core/Src/drive.c
         Core/Src/h_bridge_control.c
+        Core/Src/maze_bot_can_dbc.c
+        Core/Src/maze_bot_can_driver.c
         Core/Src/maze_navigation.c
         Core/Src/pid.c
         Core/Src/scheduler.c
