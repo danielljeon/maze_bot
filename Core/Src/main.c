@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "bno085_runner.h"
+#include "can.h"
 #include "controls.h"
 #include "drive.h"
 #include "h_bridge_control.h"
@@ -121,10 +122,12 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-
-  // Initialize VL53L4CD.
   HAL_Delay(1000);
 
+  // Initialize CAN bus.
+  can_init();
+
+  // Initialize VL53L4CD.
   vl53l4cd_init();
   vl53l4cd_start();
 
