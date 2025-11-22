@@ -7,7 +7,7 @@
 /** Includes. *****************************************************************/
 
 #include "can.h"
-#include "maze_bot_can_dbc.h"
+#include "../maze_bot_driver/maze_bot_can_dbc.h"
 
 /** Private variables. ********************************************************/
 
