@@ -21,6 +21,19 @@ typedef enum { IDLE, STANDBY, STRAIGHT, TURN, SETTLING } mode_t;
 
 volatile float heading_error_rad_calc = 0;
 volatile float position_error_mm_calc = 0;
+volatile uint16_t vision_x1 = 0;
+volatile uint16_t vision_y1 = 0;
+volatile uint16_t vision_x2 = 0;
+volatile uint16_t vision_y2 = 0;
+
+/** Public functions. *********************************************************/
+
+void process_vision(can_header_t *header, uint8_t *data) {
+  vision_x1 = data[0] & data[1] << 8;
+  vision_y1 = data[2] & data[3] << 8;
+  vision_x2 = data[4] & data[5] << 8;
+  vision_y2 = data[6] & data[7] << 8;
+}
 
 /** Private variables. ********************************************************/
 
