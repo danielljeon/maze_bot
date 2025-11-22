@@ -40,10 +40,10 @@ BO_ 257 state: 1 Vector__XXX
  SG_ system_state : 0|8@1+ (1,0) [0|255] "" Vector__XXX
 
 BO_ 100 vision: 8 Vector__XXX
- SG_ x1 : 0|16@1- (1,0) [-32768|32767] "vision_coord" Vector__XXX
- SG_ y1 : 16|16@1- (1,0) [-32768|32767] "vision_coord" Vector__XXX
- SG_ x2 : 32|16@1- (1,0) [-32768|32767] "vision_coord" Vector__XXX
- SG_ y2 : 48|16@1- (1,0) [-32768|32767] "vision_coord" Vector__XXX
+ SG_ x1 : 0|16@1- (1,0) [0|65535] "vision_coord" Vector__XXX
+ SG_ y1 : 16|16@1- (1,0) [0|65535] "vision_coord" Vector__XXX
+ SG_ x2 : 32|16@1- (1,0) [0|65535] "vision_coord" Vector__XXX
+ SG_ y2 : 48|16@1- (1,0) [0|65535] "vision_coord" Vector__XXX
 
 BO_ 600 rtc: 8 Vector__XXX
  SG_ rtc_state : 0|8@1+ (1,0) [0|255] "" Vector__XXX
