@@ -7,6 +7,7 @@
 /** Includes. *****************************************************************/
 
 #include "maze_bot_can_dbc.h"
+#include "maze_navigation.h"
 
 /** Public variables. *********************************************************/
 
@@ -36,10 +37,10 @@ const can_message_t dbc_messages[] = {
     },
     {
         .name = "vision",
-        .message_id = 100,
+        .message_id = 16,
         .id_mask = 0xFFFFFFFF,
         .dlc = 8,
-        .rx_handler = 0,
+        .rx_handler = (can_rx_handler_t)process_vision,
         .tx_handler = 0,
         .signal_count = 4,
         .signals =
