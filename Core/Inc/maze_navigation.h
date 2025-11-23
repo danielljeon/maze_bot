@@ -11,8 +11,13 @@
 
 #include "../maze_bot_driver/maze_bot_can_dbc.h"
 
+/** Public types. *************************************************************/
+
+typedef enum { IDLE, STRAIGHT, TURN, SETTLING } maze_navigation_mode_t;
+
 /** Public variables. *********************************************************/
 
+extern volatile maze_navigation_mode_t mode;
 extern volatile float heading_error_rad_calc;
 extern volatile float position_error_mm_calc;
 extern volatile uint16_t vision_x1;

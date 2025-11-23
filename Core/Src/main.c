@@ -26,8 +26,8 @@
 #include "controls.h"
 #include "drive.h"
 #include "h_bridge_control.h"
-#include "maze_navigation.h"
 #include "scheduler.h"
+#include "state_machine.h"
 #include "vl53l4cd_runner.h"
 /* USER CODE END Includes */
 
@@ -149,12 +149,12 @@ int main(void)
   // Initialize scheduler tasks.
   void (*heading_task)(void) = heading_loop;
   void (*yaw_rate_task)(void) = yaw_rate_loop;
-  void (*maze_control_step_task)(void) = maze_control_step;
+  void (*state_machine_task)(void) = run_state_machine;
   void (*drive_task)(void) = drive;
   void (*tof_task)(void) = vl53l4cd_process;
   scheduler_add_task(heading_task, 10);
   scheduler_add_task(yaw_rate_task, 5);
-  scheduler_add_task(maze_control_step_task, 10);
+  scheduler_add_task(state_machine_task, 10);
   scheduler_add_task(drive_task, 2);
   scheduler_add_task(tof_task, 100);
 
