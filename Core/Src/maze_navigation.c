@@ -13,12 +13,9 @@
 #include "math.h"
 #include "vl53l4cd_runner.h"
 
-/** Public types. *************************************************************/
-
-typedef enum { IDLE, STANDBY, STRAIGHT, TURN, SETTLING } mode_t;
-
 /** Public variables. *********************************************************/
 
+volatile maze_navigation_mode_t mode = STRAIGHT;
 volatile float heading_error_rad_calc = 0;
 volatile float position_error_mm_calc = 0;
 volatile uint16_t vision_x1 = 0;
@@ -36,8 +33,6 @@ void process_vision(can_header_t *header, uint8_t *data) {
 }
 
 /** Private variables. ********************************************************/
-
-static mode_t mode = STANDBY;
 
 // Calibrations.
 static const float V_FAST = 0.25f;     // Forward command in [-1,1].
@@ -133,17 +128,6 @@ void maze_control_step(void) {
   switch (mode) {
 
   case IDLE:
-    break;
-
-  case STANDBY:
-    if (state_standby_counter > 10) {
-      // Initialize startup controls.
-      zero_heading();
-      mode = STRAIGHT;
-
-    } else if (front_mm > STANDBY_TICKS) { // Ensure middle TOF clear.
-      state_standby_counter++;
-    }
     break;
 
   case STRAIGHT:
