@@ -168,6 +168,18 @@ void run_state_machine(void) {
     }
     break;
 
+  case STATE_MAZE_NAV_UNTIL_MM:
+    if (watchdog_count > watchdog[playbook_index] ||
+        front_mm <= condition[playbook_index] || mode != STRAIGHT) {
+      next_state();
+      mode = STRAIGHT;
+      previously_turning = false;
+    } else {
+      maze_control_step();
+      watchdog_count++;
+    }
+    break;
+
   case STATE_PICKUP_PACKAGE:
     pickup_package();
     next_state();
