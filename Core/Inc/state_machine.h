@@ -19,6 +19,7 @@ typedef enum state_machine {
   STATE_PICKUP_PACKAGE,
   STATE_DROP_PACKAGE,
   STATE_MAZE_NAV_FOR_N_TURNS,
+  STATE_MAZE_NAV_UNTIL_MM,
 } state_t;
 
 /** Public variables. *********************************************************/
