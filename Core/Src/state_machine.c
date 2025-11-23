@@ -21,7 +21,7 @@ static uint16_t state_standby_counter = 0;
 
 /** Definitions. **************************************************************/
 
-#define STATE_MACHINE_PLAYBOOK_COUNT 3
+#define STATE_MACHINE_PLAYBOOK_COUNT 4
 #define STATE_MACHINE_INITIAL_STATE STATE_INIT
 #define STATE_MACHINE_FINAL_STATE STATE_IDLE
 
@@ -31,6 +31,7 @@ static uint16_t state_standby_counter = 0;
 uint8_t playbook_index = 0;
 state_t playbook[STATE_MACHINE_PLAYBOOK_COUNT] = {
     STATE_MACHINE_INITIAL_STATE,
+    STATE_STANDBY,
     STATE_MAZE_NAV_FOR_N_TURNS,
     STATE_MACHINE_FINAL_STATE,
 };
@@ -39,13 +40,16 @@ state_t playbook[STATE_MACHINE_PLAYBOOK_COUNT] = {
 static float condition[STATE_MACHINE_PLAYBOOK_COUNT] = {
     0,
     0,
+    3,
     0,
 }; // Stored as float and cast within the respective state switch case.
+
+static uint16_t condition_count = 0;
 
 // Soft state watchdog timers.
 static uint16_t watchdog[STATE_MACHINE_PLAYBOOK_COUNT] = {
     0, // STATE_MACHINE_INITIAL_STATE.
-    300,
+    0, 3000,
     0, // STATE_MACHINE_FINAL_STATE.
 };
 static uint16_t watchdog_count = 0;
@@ -84,8 +88,9 @@ static void next_state(void) {
     bot_state = playbook[playbook_index]; // Increment playbook.
   }
 
-  // Clear watchdog timer.
+  // Clear watchdog counter and condition counter.
   watchdog_count = 0;
+  condition_count = 0;
 }
 
 /** Public functions. *********************************************************/
@@ -144,19 +149,22 @@ void run_state_machine(void) {
     break;
 
   case STATE_MAZE_NAV_FOR_N_TURNS:
-    if (watchdog_count > watchdog[playbook_index]) {
+    if (watchdog_count > watchdog[playbook_index] ||
+        condition_count >= (uint16_t)condition[playbook_index]) {
       next_state();
+      mode = STRAIGHT;
+      previously_turning = false;
     } else {
-      if (previously_turning && mode != TURN) {
-        mode = IDLE;
-        next_state();
+      if (previously_turning && mode != SETTLING) {
+        previously_turning = false;
+        condition_count++;
       } else {
-        if (!previously_turning && mode == TURN) {
+        if (!previously_turning && mode == SETTLING) {
           previously_turning = true;
         }
         maze_control_step();
-        watchdog_count++;
       }
+      watchdog_count++;
     }
     break;
 
