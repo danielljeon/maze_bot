@@ -34,35 +34,35 @@ state_t playbook[STATE_MACHINE_PLAYBOOK_COUNT] = {
     STATE_STANDBY,
     STATE_MAZE_NAV_FOR_N_TURNS,
     STATE_MAZE_NAV_UNTIL_MM,
-    STATE_TURN,
+    STATE_TURN_FOR_TICKS,
     STATE_MAZE_NAV_UNTIL_MM,
-    STATE_TURN,
+    STATE_TURN_FOR_TICKS,
     STATE_MACHINE_FINAL_STATE, // End.
 };
 
 // Align state transition condition values to match state playbook_index.
 static float condition[STATE_MACHINE_PLAYBOOK_COUNT] = {
-    0,         // STATE_MACHINE_INITIAL_STATE.
-    0,         // STATE_STANDBY.
-    3,         // STATE_MAZE_NAV_FOR_N_TURNS.
-    100,       // STATE_MAZE_NAV_UNTIL_MM.
-    1.570796f, // STATE_TURN.
-    150,       // STATE_MAZE_NAV_UNTIL_MM.
-    0,         // STATE_MACHINE_FINAL_STATE.
-    1.570796f, // STATE_TURN.
+    0,          // STATE_MACHINE_INITIAL_STATE.
+    0,          // STATE_STANDBY.
+    1,          // STATE_MAZE_NAV_FOR_N_TURNS.
+    300,        // STATE_MAZE_NAV_UNTIL_MM.
+    -1.570796f, // STATE_TURN_FOR_TICKS.
+    800,        // STATE_MAZE_NAV_UNTIL_MM.
+    -1.570796f, // STATE_TURN_FOR_TICKS.
+    0,          // STATE_MACHINE_FINAL_STATE.
 }; // Stored as float and cast within the respective state switch case.
 static uint16_t condition_count = 0;
 
 // Soft state watchdog timers.
 static uint16_t watchdog[STATE_MACHINE_PLAYBOOK_COUNT] = {
-    0,    // STATE_MACHINE_INITIAL_STATE.
-    0,    // STATE_STANDBY.
-    3000, // STATE_MAZE_NAV_FOR_N_TURNS.
-    5000, // STATE_MAZE_NAV_UNTIL_MM.
-    0,    // STATE_TURN.
-    5000, // STATE_MAZE_NAV_UNTIL_MM.
-    0,    // STATE_TURN.
-    0,    // STATE_MACHINE_FINAL_STATE.
+    0,     // STATE_MACHINE_INITIAL_STATE.
+    0,     // STATE_STANDBY.
+    10000, // STATE_MAZE_NAV_FOR_N_TURNS.
+    5000,  // STATE_MAZE_NAV_UNTIL_MM.
+    1000,  // STATE_TURN_FOR_TICKS.
+    5000,  // STATE_MAZE_NAV_UNTIL_MM.
+    1000,  // STATE_TURN_FOR_TICKS.
+    0,     // STATE_MACHINE_FINAL_STATE.
 };
 static uint16_t watchdog_count = 0;
 
@@ -137,6 +137,17 @@ void run_state_machine(void) {
   case STATE_TURN:
     set_relative_heading(condition[playbook_index]);
     next_state();
+    break;
+
+  case STATE_TURN_FOR_TICKS:
+    if (watchdog_count == 0) {
+      set_relative_heading(condition[playbook_index]);
+      watchdog_count++;
+    } else if (watchdog_count > watchdog[playbook_index]) {
+      next_state();
+    } else {
+      watchdog_count++;
+    }
     break;
 
   case STATE_ADVANCE_FOR_TICKS:
