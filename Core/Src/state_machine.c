@@ -21,7 +21,7 @@ static uint16_t state_standby_counter = 0;
 
 /** Definitions. **************************************************************/
 
-#define STATE_MACHINE_PLAYBOOK_COUNT 8
+#define STATE_MACHINE_PLAYBOOK_COUNT 7
 #define STATE_MACHINE_INITIAL_STATE STATE_INIT
 #define STATE_MACHINE_FINAL_STATE STATE_IDLE
 
@@ -32,10 +32,9 @@ uint8_t playbook_index = 0;
 state_t playbook[STATE_MACHINE_PLAYBOOK_COUNT] = {
     STATE_MACHINE_INITIAL_STATE, // Start.
     STATE_STANDBY,
-    STATE_MAZE_NAV_FOR_N_TURNS,
-    STATE_MAZE_NAV_UNTIL_MM,
+    STATE_CORRIDOR_UNTIL_MM,
     STATE_TURN_FOR_TICKS,
-    STATE_MAZE_NAV_UNTIL_MM,
+    STATE_CORRIDOR_UNTIL_MM,
     STATE_TURN_FOR_TICKS,
     STATE_MACHINE_FINAL_STATE, // End.
 };
@@ -44,10 +43,9 @@ state_t playbook[STATE_MACHINE_PLAYBOOK_COUNT] = {
 static float condition[STATE_MACHINE_PLAYBOOK_COUNT] = {
     0,          // STATE_MACHINE_INITIAL_STATE.
     0,          // STATE_STANDBY.
-    1,          // STATE_MAZE_NAV_FOR_N_TURNS.
-    300,        // STATE_MAZE_NAV_UNTIL_MM.
+    300,        // STATE_CORRIDOR_UNTIL_MM.
     -1.570796f, // STATE_TURN_FOR_TICKS.
-    800,        // STATE_MAZE_NAV_UNTIL_MM.
+    800,        // STATE_CORRIDOR_UNTIL_MM.
     -1.570796f, // STATE_TURN_FOR_TICKS.
     0,          // STATE_MACHINE_FINAL_STATE.
 }; // Stored as float and cast within the respective state switch case.
@@ -57,10 +55,9 @@ static uint16_t condition_count = 0;
 static uint16_t watchdog[STATE_MACHINE_PLAYBOOK_COUNT] = {
     0,     // STATE_MACHINE_INITIAL_STATE.
     0,     // STATE_STANDBY.
-    10000, // STATE_MAZE_NAV_FOR_N_TURNS.
-    5000,  // STATE_MAZE_NAV_UNTIL_MM.
+    10000, // STATE_CORRIDOR_UNTIL_MM.
     1000,  // STATE_TURN_FOR_TICKS.
-    5000,  // STATE_MAZE_NAV_UNTIL_MM.
+    5000,  // STATE_CORRIDOR_UNTIL_MM.
     1000,  // STATE_TURN_FOR_TICKS.
     0,     // STATE_MACHINE_FINAL_STATE.
 };
@@ -171,34 +168,21 @@ void run_state_machine(void) {
     }
     break;
 
-  case STATE_MAZE_NAV_FOR_N_TURNS:
-    if (watchdog_count > watchdog[playbook_index] ||
-        condition_count >= (uint16_t)condition[playbook_index]) {
+  case STATE_CORRIDOR_FOR_TICKS:
+    if (watchdog_count > watchdog[playbook_index]) {
       next_state();
-      mode = STRAIGHT;
-      previously_turning = false;
     } else {
-      if (previously_turning && mode != SETTLING) {
-        previously_turning = false;
-        condition_count++;
-      } else {
-        if (!previously_turning && mode == SETTLING) {
-          previously_turning = true;
-        }
-        maze_control_step();
-      }
+      corridor_straight();
       watchdog_count++;
     }
     break;
 
-  case STATE_MAZE_NAV_UNTIL_MM:
+  case STATE_CORRIDOR_UNTIL_MM:
     if (watchdog_count > watchdog[playbook_index] ||
-        front_mm <= condition[playbook_index] || mode != STRAIGHT) {
+        front_mm <= condition[playbook_index]) {
       next_state();
-      mode = STRAIGHT;
-      previously_turning = false;
     } else {
-      maze_control_step();
+      corridor_straight();
       watchdog_count++;
     }
     break;
