@@ -36,29 +36,25 @@ void process_vision(can_header_t *header, uint8_t *data) {
 
 // Calibrations.
 static const float V_FAST = 0.25f;     // Forward command in [-1,1].
-static const float K_THETA = 1.20f;    // Corridor parallel gain (rad -> cmd).
-static const float KX_OVER_L = 0.04f;  // Centering bias gain (mm^-1).
+static const float K_THETA = 1.10f;    // Corridor parallel gain (rad -> cmd).
+static const float KX_OVER_L = 0.03f;  // Centering bias gain (mm^-1).
 static const float ERR_PAR_OK = 0.16f; // Consider "aligned".
 
 // Heading nudge calibrations.
 static const float HEADING_STEP_MAX = 0.3f;         // Max heading nudge (rad).
 static const float HEADING_STEP_MULTIPLIER = 0.75f; // Step multiplier.
-static const float HEADING_STEP_TURN_STATE = 0.35f; // Heading nudge (rad).
-
-// IDLE state calibrations.
-static const float STANDBY_TICKS = 100.0f; // Ticks for standby duration.
-static uint8_t state_standby_counter = 0;
+static const float HEADING_STEP_TURN_STATE = 0.45f; // Heading nudge (rad).
 
 // STRAIGHT state calibrations.
-static const uint16_t MIN_STRAIGHT_TICKS = 30; // Minimum ticks in STRAIGHT.
+static const uint16_t MIN_STRAIGHT_TICKS = 50; // Minimum ticks in STRAIGHT.
 static uint16_t straight_counter = 0; // Minimum ticks in state counters.
 
 // TURN state calibrations.
-static const float FRONT_STOP = 60.0f; // Stop and turn if front < this (mm).
-static const float FRONT_GO = 100.0f;  // Resume straight if front > this (mm).
+static const float FRONT_STOP = 100.0f; // Stop and turn if front < this (mm).
+static const float FRONT_GO = 200.0f;   // Resume straight if front > this (mm).
 
 // SETTLING state calibrations.
-static const uint16_t SETTLING_TICKS = 10; // Settle after turn.
+static const uint16_t SETTLING_TICKS = 20; // Settle after turn.
 static uint16_t settling_tick_counter = 0;
 
 /** Private functions. ********************************************************/
