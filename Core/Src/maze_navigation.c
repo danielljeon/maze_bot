@@ -178,3 +178,5 @@ void corridor_straight(void) {
   // Control H-bridge forward channel (yaw/heading handled by controls).
   h_bridge_linear = clamp(V_FAST, -1.0f, 1.0f);
 }
+
+void corridor_stop(void) { h_bridge_linear = 0; }
