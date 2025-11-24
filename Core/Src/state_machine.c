@@ -43,9 +43,9 @@ state_t playbook[STATE_MACHINE_PLAYBOOK_COUNT] = {
 static float condition[STATE_MACHINE_PLAYBOOK_COUNT] = {
     0,          // STATE_MACHINE_INITIAL_STATE.
     0,          // STATE_STANDBY.
-    300,        // STATE_CORRIDOR_UNTIL_MM.
+    100,        // STATE_CORRIDOR_UNTIL_MM.
     -1.570796f, // STATE_TURN_FOR_TICKS.
-    800,        // STATE_CORRIDOR_UNTIL_MM.
+    700,        // STATE_CORRIDOR_UNTIL_MM.
     -1.570796f, // STATE_TURN_FOR_TICKS.
     0,          // STATE_MACHINE_FINAL_STATE.
 }; // Stored as float and cast within the respective state switch case.
@@ -170,6 +170,7 @@ void run_state_machine(void) {
 
   case STATE_CORRIDOR_FOR_TICKS:
     if (watchdog_count > watchdog[playbook_index]) {
+      corridor_stop();
       next_state();
     } else {
       corridor_straight();
@@ -180,6 +181,7 @@ void run_state_machine(void) {
   case STATE_CORRIDOR_UNTIL_MM:
     if (watchdog_count > watchdog[playbook_index] ||
         front_mm <= condition[playbook_index]) {
+      corridor_stop();
       next_state();
     } else {
       corridor_straight();

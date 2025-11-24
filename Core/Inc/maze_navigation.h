@@ -24,9 +24,7 @@ extern volatile uint16_t vision_y2;
 
 void process_vision(can_header_t *header, uint8_t *data);
 
-/**
- * @brief Maze control step cycle.
- */
 void corridor_straight(void);
+void corridor_stop(void);
 
 #endif
