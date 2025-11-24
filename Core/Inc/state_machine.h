@@ -17,10 +17,10 @@ typedef enum state_machine {
   STATE_TURN_FOR_TICKS,
   STATE_ADVANCE_FOR_TICKS,
   STATE_ADVANCE_UNTIL_MM,
+  STATE_CORRIDOR_FOR_TICKS,
+  STATE_CORRIDOR_UNTIL_MM,
   STATE_PICKUP_PACKAGE,
   STATE_DROP_PACKAGE,
-  STATE_MAZE_NAV_FOR_N_TURNS,
-  STATE_MAZE_NAV_UNTIL_MM,
 } state_t;
 
 /** Public variables. *********************************************************/

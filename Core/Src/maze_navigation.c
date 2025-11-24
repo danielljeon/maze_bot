@@ -15,7 +15,6 @@
 
 /** Public variables. *********************************************************/
 
-volatile maze_navigation_mode_t mode = STRAIGHT;
 volatile float heading_error_rad_calc = 0;
 volatile float position_error_mm_calc = 0;
 volatile uint16_t vision_x1 = 0;
@@ -35,27 +34,13 @@ void process_vision(can_header_t *header, uint8_t *data) {
 /** Private variables. ********************************************************/
 
 // Calibrations.
-static const float V_FAST = 0.25f;     // Forward command in [-1,1].
-static const float K_THETA = 1.10f;    // Corridor parallel gain (rad -> cmd).
-static const float KX_OVER_L = 0.03f;  // Centering bias gain (mm^-1).
-static const float ERR_PAR_OK = 0.16f; // Consider "aligned".
+static const float V_FAST = 0.25f;    // Forward command in [-1,1].
+static const float K_THETA = 1.10f;   // Corridor parallel gain (rad -> cmd).
+static const float KX_OVER_L = 0.03f; // Centering bias gain (mm^-1).
 
 // Heading nudge calibrations.
 static const float HEADING_STEP_MAX = 0.3f;         // Max heading nudge (rad).
 static const float HEADING_STEP_MULTIPLIER = 0.75f; // Step multiplier.
-static const float HEADING_STEP_TURN_STATE = 0.45f; // Heading nudge (rad).
-
-// STRAIGHT state calibrations.
-static const uint16_t MIN_STRAIGHT_TICKS = 50; // Minimum ticks in STRAIGHT.
-static uint16_t straight_counter = 0; // Minimum ticks in state counters.
-
-// TURN state calibrations.
-static const float FRONT_STOP = 100.0f; // Stop and turn if front < this (mm).
-static const float FRONT_GO = 200.0f;   // Resume straight if front > this (mm).
-
-// SETTLING state calibrations.
-static const uint16_t SETTLING_TICKS = 20; // Settle after turn.
-static uint16_t settling_tick_counter = 0;
 
 /** Private functions. ********************************************************/
 
@@ -63,8 +48,37 @@ static float clamp(const float value, const float low, const float high) {
   return value < low ? low : (value > high ? high : value);
 }
 
-/** Public functions. *********************************************************/
-
+/**
+ * @brief Computes the robot's heading error (in radians) relative to a wall
+ *        using two time-of-flight (ToF) distance measurements.
+ *
+ * The function assumes two ToF sensors are mounted symmetrically on the
+ * front-left and front-right corners of the robot, each angled outward by
+ * `angle_rad` from the forward axis. Using the measured left and right
+ * distances, it computes the angular deviation between the robot's forward
+ * direction and the wall's normal vector.
+ *
+ * Geometry reference:
+ *  - Robot width: w.
+ *  - Sensor mounting angle: +- angle_rad from forward.
+ *  - Measured distances: left_mm, right_mm.
+ *
+ * Formula:
+ *    theta_err = atan2(
+ *                  (left_mm - right_mm) * cos(angle_rad),
+ *                  width_mm + (left_mm + right_mm) * sin(angle_rad)
+ *                )
+ *
+ * Positive theta_err indicates the robot is rotated counterclockwise
+ * relative to the wall normal (i.e., facing slightly left).
+ *
+ * @param left_mm Distance (mm) from the left ToF sensor to the wall.
+ * @param right_mm Distance (mm) from the right ToF sensor to the wall.
+ * @param angle_rad Angle (radians) of each sensor from the forward axis.
+ * @param width_mm Distance (mm) between the two sensors (robot width).
+ *
+ * @return Heading error in radians (positive CCW from forward to wall normal).
+ */
 float heading_error_rad(const float left_mm, const float right_mm,
                         const float angle_rad, const float width_mm) {
   const float sin = sinf(angle_rad);
@@ -80,10 +94,43 @@ float heading_error_rad(const float left_mm, const float right_mm,
   return atan2f(numerator, denominator);
 }
 
-static float corridor_parallel_error_rad(const float left_mm,
-                                         const float right_mm,
-                                         const float angle_rad,
-                                         const float width_mm) {
+/**
+ * @brief Computes the robot's lateral offset (centering error) in a corridor.
+ *
+ * The function computes how far the robot is displaced from the corridor
+ * centerline, assuming two side-mounted distance sensors are angled outward by
+ * `alpha_rad` relative to the robot's forward axis and are roughly parallel to
+ * the corridor walls.
+ *
+* Geometry reference:
+ *  - Sensor mounting angle: +- angle_rad from forward.
+ *  - Measured distances: left_mm, right_mm.
+ *  - The perpendicular wall distances are d*sin(alpha).
+ *  - The offset from the corridor centerline is half the difference between.
+ *
+ * Formula:
+ *    x_err = 0.5 * (d_left_mm - d_right_mm) * sin(alpha_rad)
+ *
+ * Sign convention:
+ *  - Positive x_err indicates the robot is left of the corridor center (left
+ *    wall closer).
+*   - Negative x_err indicates the robot is right of the corridor center (right
+ *    wall closer).
+ *  - Zero x_err is the center.
+ *
+ * @param d_left_mm Distance (mm) from the left side sensor to its wall.
+ * @param d_right_mm Distance (mm) from the right side sensor to its wall.
+ * @param alpha_rad Angle (radians) of each sensor from the forward axis.
+ *
+ * @return Lateral offset (mm) of the robot from the corridor centerline.
+ */
+float position_error_mm(const float d_left_mm, const float d_right_mm,
+                        const float alpha_rad) {
+  return 0.5f * (d_left_mm - d_right_mm) * sinf(alpha_rad);
+}
+
+float corridor_parallel_error_rad(const float left_mm, const float right_mm,
+                                  const float angle_rad, const float width_mm) {
   const float sin = sinf(angle_rad);
   const float cos = cosf(angle_rad);
 
@@ -102,14 +149,10 @@ static float corridor_parallel_error_rad(const float left_mm,
   return error;
 }
 
-float position_error_mm(const float d_left_mm, const float d_right_mm,
-                        const float alpha_rad) {
-  return 0.5f * (d_left_mm - d_right_mm) * sinf(alpha_rad);
-}
+/** Public functions. *********************************************************/
 
-void maze_control_step(void) {
+void corridor_straight(void) {
   const float left_mm = vl53l4cd_distance_mm[0];
-  const float front_mm = vl53l4cd_distance_mm[1];
   const float right_mm = vl53l4cd_distance_mm[2];
   const float angle_rad = MAZE_BOT_TOF_ANGLE_RAD;
   const float width_mm = MAZE_BOT_TOF_WIDTH_SPACING_MM;
@@ -119,71 +162,19 @@ void maze_control_step(void) {
       corridor_parallel_error_rad(left_mm, right_mm, angle_rad, width_mm);
   position_error_mm_calc = position_error_mm(left_mm, right_mm, angle_rad);
 
-  float v = 0.0f; // Forward command.
+  // Convert corridor errors to a small heading setpoint nudge (rad).
+  float steer =
+      K_THETA * heading_error_rad_calc + KX_OVER_L * position_error_mm_calc;
 
-  switch (mode) {
+  // Rate-limit the nudge so the outer PID can track smoothly.
+  if (steer > HEADING_STEP_MAX)
+    steer = HEADING_STEP_MAX;
+  if (steer < -HEADING_STEP_MAX)
+    steer = -HEADING_STEP_MAX;
 
-  case IDLE:
-    break;
-
-  case STRAIGHT:
-    v = V_FAST;
-    float nudge; // Small heading increment/nudge.
-
-    // Convert corridor errors to a small heading setpoint nudge (rad).
-    float steer =
-        K_THETA * heading_error_rad_calc + KX_OVER_L * position_error_mm_calc;
-
-    // Rate-limit the nudge so the outer PID can track smoothly.
-    if (steer > HEADING_STEP_MAX)
-      steer = HEADING_STEP_MAX;
-    if (steer < -HEADING_STEP_MAX)
-      steer = -HEADING_STEP_MAX;
-
-    // Update straight counter to ensure minimum straight travel time.
-    if (straight_counter <= MIN_STRAIGHT_TICKS) {
-      straight_counter++; // Enforce constant heading for a fixed time.
-      nudge = 0.0f;
-    } else {
-      nudge = steer; // Nudge setpoint by this much.
-    }
-
-    // Set controls setpoint (heading controller).
-    set_relative_heading(nudge * HEADING_STEP_MULTIPLIER);
-
-    // Corner detection.
-    if (front_mm < FRONT_STOP) {
-      straight_counter = 0;
-      mode = TURN;
-    }
-    break;
-
-  case TURN:
-    // Pure point/tank turn, no forward motion.
-    v = 0.0f;
-
-    // Spin-in-place by nudging heading setpoint steadily.
-    const float turn_dir = left_mm >= right_mm ? +1.0f : -1.0f;
-
-    // Set controls setpoint (heading controller).
-    set_relative_heading(turn_dir * HEADING_STEP_TURN_STATE);
-
-    // Exit when aligned and the front is clear (or front invalid).
-    if (fabsf(heading_error_rad_calc) < ERR_PAR_OK && (front_mm > FRONT_GO)) {
-      mode = SETTLING;
-    }
-    break;
-
-  case SETTLING:
-    if (settling_tick_counter <= SETTLING_TICKS) {
-      settling_tick_counter++;
-    } else {
-      settling_tick_counter = 0;
-      mode = STRAIGHT;
-    }
-    break;
-  }
+  // Set controls setpoint (heading controller).
+  set_relative_heading(steer * HEADING_STEP_MULTIPLIER);
 
   // Control H-bridge forward channel (yaw/heading handled by controls).
-  h_bridge_linear = clamp(v, -1.0f, 1.0f);
+  h_bridge_linear = clamp(V_FAST, -1.0f, 1.0f);
 }
