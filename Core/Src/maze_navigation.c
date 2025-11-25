@@ -37,13 +37,12 @@ void process_msg2(can_header_t *header, uint8_t *data) {
 /** Private variables. ********************************************************/
 
 // Calibrations.
-static const float V_FAST = 0.15f;   // Forward command in [-1,1].
-static const float K_THETA = 1.25f;  // Corridor parallel gain (rad -> cmd).
-static const float KX_OVER_L = 0.2f; // Centering bias gain (mm^-1).
+static const float V_FAST = 0.2f;     // Forward command in [-1,1].
+static const float K_THETA = 0.8f;    // Corridor parallel gain (rad -> cmd).
+static const float KX_OVER_L = 0.03f; // Centering bias gain (mm^-1).
 
 // Heading nudge calibrations.
-static const float HEADING_STEP_MAX = 0.15f;       // Max heading nudge (rad).
-static const float HEADING_STEP_MULTIPLIER = 0.5f; // Step multiplier.
+static const float HEADING_STEP_MAX = 0.25f; // Max heading nudge (rad).
 
 /** Private functions. ********************************************************/
 
@@ -176,7 +175,7 @@ void corridor_straight(void) {
     steer = -HEADING_STEP_MAX;
 
   // Set controls setpoint (heading controller).
-  set_relative_heading(steer * HEADING_STEP_MULTIPLIER);
+  set_relative_heading(steer);
 
   // Control H-bridge forward channel (yaw/heading handled by controls).
   h_bridge_linear = clamp(V_FAST, -1.0f, 1.0f);
