@@ -42,8 +42,8 @@ act_t playbook[STATE_MACHINE_PLAYBOOK_COUNT] = {
     },
     {
         .state = STATE_CORRIDOR_FOR_TICKS,
-        .condition = 10,
-        .watchdog_max = 10000,
+        .condition = 50,
+        .watchdog_max = 50,
     },
     {
         .state = STATE_CORRIDOR_UNTIL_MM,
@@ -53,7 +53,12 @@ act_t playbook[STATE_MACHINE_PLAYBOOK_COUNT] = {
     {
         .state = STATE_TURN_FOR_TICKS,
         .condition = -1.570796f,
-        .watchdog_max = 1000,
+        .watchdog_max = 100,
+    },
+    {
+        .state = STATE_CORRIDOR_FOR_TICKS,
+        .condition = 50,
+        .watchdog_max = 50,
     },
     {
         .state = STATE_CORRIDOR_UNTIL_MM,
@@ -63,7 +68,12 @@ act_t playbook[STATE_MACHINE_PLAYBOOK_COUNT] = {
     {
         .state = STATE_TURN_FOR_TICKS,
         .condition = -1.570796f,
-        .watchdog_max = 1000,
+        .watchdog_max = 100,
+    },
+    {
+        .state = STATE_CORRIDOR_FOR_TICKS,
+        .condition = 50,
+        .watchdog_max = 50,
     },
     {
         .state = STATE_MACHINE_FINAL_STATE,
