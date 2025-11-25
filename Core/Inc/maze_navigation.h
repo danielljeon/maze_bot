@@ -15,14 +15,15 @@
 
 extern volatile float heading_error_rad_calc;
 extern volatile float position_error_mm_calc;
-extern volatile uint16_t vision_x1;
-extern volatile uint16_t vision_y1;
-extern volatile uint16_t vision_x2;
-extern volatile uint16_t vision_y2;
+extern volatile float v1;
+extern volatile float v2;
+extern volatile float v3;
+extern volatile float v4;
 
 /** Public functions. *********************************************************/
 
-void process_vision(can_header_t *header, uint8_t *data);
+void process_msg1(can_header_t *header, uint8_t *data);
+void process_msg2(can_header_t *header, uint8_t *data);
 
 void corridor_straight(void);
 void corridor_stop(void);

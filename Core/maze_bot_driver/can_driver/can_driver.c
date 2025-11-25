@@ -1,12 +1,12 @@
 /*******************************************************************************
- * @file maze_bot_can_driver.c
- * @brief Maze Bot driver for CAN bus based communication.
+ * @file can_driver.c
+ * @brief Low level simplified CAN bus communication drivers.
  *******************************************************************************
  */
 
 /** Includes. *****************************************************************/
 
-#include "maze_bot_can_driver.h"
+#include "can_driver.h"
 #include "math.h"
 
 /** Private functions. ********************************************************/

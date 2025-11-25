@@ -17,30 +17,33 @@
 
 volatile float heading_error_rad_calc = 0;
 volatile float position_error_mm_calc = 0;
-volatile uint16_t vision_x1 = 0;
-volatile uint16_t vision_y1 = 0;
-volatile uint16_t vision_x2 = 0;
-volatile uint16_t vision_y2 = 0;
+volatile float v1 = 0;
+volatile float v2 = 0;
+volatile float v3 = 0;
+volatile float v4 = 0;
 
 /** Public functions. *********************************************************/
 
-void process_vision(can_header_t *header, uint8_t *data) {
-  vision_x1 = data[0] | data[1] << 8;
-  vision_y1 = data[2] | data[3] << 8;
-  vision_x2 = data[4] | data[5] << 8;
-  vision_y2 = data[6] | data[7] << 8;
+void process_msg1(can_header_t *header, uint8_t *data) {
+  memcpy(&v1, &data[0], 4);
+  memcpy(&v2, &data[4], 4);
+}
+
+void process_msg2(can_header_t *header, uint8_t *data) {
+  memcpy(&v3, &data[0], 4);
+  memcpy(&v4, &data[4], 4);
 }
 
 /** Private variables. ********************************************************/
 
 // Calibrations.
-static const float V_FAST = 0.25f;    // Forward command in [-1,1].
-static const float K_THETA = 1.10f;   // Corridor parallel gain (rad -> cmd).
-static const float KX_OVER_L = 0.03f; // Centering bias gain (mm^-1).
+static const float V_FAST = 0.15f;   // Forward command in [-1,1].
+static const float K_THETA = 1.25f;  // Corridor parallel gain (rad -> cmd).
+static const float KX_OVER_L = 0.2f; // Centering bias gain (mm^-1).
 
 // Heading nudge calibrations.
-static const float HEADING_STEP_MAX = 0.3f;         // Max heading nudge (rad).
-static const float HEADING_STEP_MULTIPLIER = 0.75f; // Step multiplier.
+static const float HEADING_STEP_MAX = 0.15f;       // Max heading nudge (rad).
+static const float HEADING_STEP_MULTIPLIER = 0.5f; // Step multiplier.
 
 /** Private functions. ********************************************************/
 
