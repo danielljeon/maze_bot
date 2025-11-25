@@ -21,7 +21,7 @@ static uint16_t state_standby_counter = 0;
 
 /** Definitions. **************************************************************/
 
-#define STATE_MACHINE_PLAYBOOK_COUNT 7
+#define STATE_MACHINE_PLAYBOOK_COUNT 10
 #define STATE_MACHINE_INITIAL_STATE STATE_INIT
 #define STATE_MACHINE_FINAL_STATE STATE_IDLE
 
@@ -29,38 +29,53 @@ static uint16_t state_standby_counter = 0;
 
 // State machine playbook.
 uint8_t playbook_index = 0;
-state_t playbook[STATE_MACHINE_PLAYBOOK_COUNT] = {
-    STATE_MACHINE_INITIAL_STATE, // Start.
-    STATE_STANDBY,
-    STATE_CORRIDOR_UNTIL_MM,
-    STATE_TURN_FOR_TICKS,
-    STATE_CORRIDOR_UNTIL_MM,
-    STATE_TURN_FOR_TICKS,
-    STATE_MACHINE_FINAL_STATE, // End.
+act_t playbook[STATE_MACHINE_PLAYBOOK_COUNT] = {
+    {
+        .state = STATE_MACHINE_INITIAL_STATE,
+        .condition = 0,
+        .watchdog_max = 0,
+    },
+    {
+        .state = STATE_STANDBY,
+        .condition = 0,
+        .watchdog_max = 0,
+    },
+    {
+        .state = STATE_CORRIDOR_FOR_TICKS,
+        .condition = 10,
+        .watchdog_max = 10000,
+    },
+    {
+        .state = STATE_CORRIDOR_UNTIL_MM,
+        .condition = 100,
+        .watchdog_max = 10000,
+    },
+    {
+        .state = STATE_TURN_FOR_TICKS,
+        .condition = -1.570796f,
+        .watchdog_max = 1000,
+    },
+    {
+        .state = STATE_CORRIDOR_UNTIL_MM,
+        .condition = 700,
+        .watchdog_max = 5000,
+    },
+    {
+        .state = STATE_TURN_FOR_TICKS,
+        .condition = -1.570796f,
+        .watchdog_max = 1000,
+    },
+    {
+        .state = STATE_MACHINE_FINAL_STATE,
+        .condition = 0,
+        .watchdog_max = 0,
+    },
 };
 
-// Align state transition condition values to match state playbook_index.
-static float condition[STATE_MACHINE_PLAYBOOK_COUNT] = {
-    0,          // STATE_MACHINE_INITIAL_STATE.
-    0,          // STATE_STANDBY.
-    100,        // STATE_CORRIDOR_UNTIL_MM.
-    -1.570796f, // STATE_TURN_FOR_TICKS.
-    700,        // STATE_CORRIDOR_UNTIL_MM.
-    -1.570796f, // STATE_TURN_FOR_TICKS.
-    0,          // STATE_MACHINE_FINAL_STATE.
-}; // Stored as float and cast within the respective state switch case.
+// Stored as float and cast within the respective state switch case.
 static uint16_t condition_count = 0;
 
-// Soft state watchdog timers.
-static uint16_t watchdog[STATE_MACHINE_PLAYBOOK_COUNT] = {
-    0,     // STATE_MACHINE_INITIAL_STATE.
-    0,     // STATE_STANDBY.
-    10000, // STATE_CORRIDOR_UNTIL_MM.
-    1000,  // STATE_TURN_FOR_TICKS.
-    5000,  // STATE_CORRIDOR_UNTIL_MM.
-    1000,  // STATE_TURN_FOR_TICKS.
-    0,     // STATE_MACHINE_FINAL_STATE.
-};
+// Soft state watchdog timer (counter).
 static uint16_t watchdog_count = 0;
 
 // Previously in TURN state flag for maze navigation code.
@@ -94,7 +109,7 @@ static void next_state(void) {
   if (playbook_index >= STATE_MACHINE_PLAYBOOK_COUNT) {
     bot_state = STATE_IDLE;
   } else {
-    bot_state = playbook[playbook_index]; // Increment playbook.
+    bot_state = playbook[playbook_index].state; // Increment playbook.
   }
 
   // Clear watchdog counter and condition counter.
@@ -132,15 +147,15 @@ void run_state_machine(void) {
     break;
 
   case STATE_TURN:
-    set_relative_heading(condition[playbook_index]);
+    set_relative_heading(playbook[playbook_index].condition);
     next_state();
     break;
 
   case STATE_TURN_FOR_TICKS:
     if (watchdog_count == 0) {
-      set_relative_heading(condition[playbook_index]);
+      set_relative_heading(playbook[playbook_index].condition);
       watchdog_count++;
-    } else if (watchdog_count > watchdog[playbook_index]) {
+    } else if (watchdog_count > playbook[playbook_index].watchdog_max) {
       next_state();
     } else {
       watchdog_count++;
@@ -148,7 +163,7 @@ void run_state_machine(void) {
     break;
 
   case STATE_ADVANCE_FOR_TICKS:
-    if (watchdog_count > watchdog[playbook_index]) {
+    if (watchdog_count > playbook[playbook_index].watchdog_max) {
       h_bridge_linear = 0.0f;
       next_state();
     } else {
@@ -158,8 +173,8 @@ void run_state_machine(void) {
     break;
 
   case STATE_ADVANCE_UNTIL_MM:
-    if (watchdog_count > watchdog[playbook_index] ||
-        front_mm <= condition[playbook_index]) {
+    if (watchdog_count > playbook[playbook_index].watchdog_max ||
+        front_mm <= playbook[playbook_index].condition) {
       h_bridge_linear = 0.0f;
       next_state();
     } else {
@@ -169,7 +184,7 @@ void run_state_machine(void) {
     break;
 
   case STATE_CORRIDOR_FOR_TICKS:
-    if (watchdog_count > watchdog[playbook_index]) {
+    if (watchdog_count > playbook[playbook_index].watchdog_max) {
       corridor_stop();
       next_state();
     } else {
@@ -179,8 +194,8 @@ void run_state_machine(void) {
     break;
 
   case STATE_CORRIDOR_UNTIL_MM:
-    if (watchdog_count > watchdog[playbook_index] ||
-        front_mm <= condition[playbook_index]) {
+    if (watchdog_count > playbook[playbook_index].watchdog_max ||
+        front_mm <= playbook[playbook_index].condition) {
       corridor_stop();
       next_state();
     } else {
