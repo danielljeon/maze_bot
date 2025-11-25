@@ -6,6 +6,7 @@
 
 #ifndef MAZE_BOT__STATE_MACHINE_H
 #define MAZE_BOT__STATE_MACHINE_H
+#include <stdint.h>
 
 /** Public types. *************************************************************/
 
@@ -22,6 +23,13 @@ typedef enum state_machine {
   STATE_PICKUP_PACKAGE,
   STATE_DROP_PACKAGE,
 } state_t;
+
+typedef struct playbook_act {
+  state_t state;   // State machine state.
+  float condition; // Generalized condition value.
+  // (Type cast in state machine if required).
+  uint16_t watchdog_max; // Maximum state soft-watchdog tick count.
+} act_t;
 
 /** Public variables. *********************************************************/
 
