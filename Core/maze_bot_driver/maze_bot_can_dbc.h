@@ -9,7 +9,7 @@
 
 /** Includes. *****************************************************************/
 
-#include "maze_bot_can_driver.h"
+#include "can_driver/can_driver.h"
 
 /** CPP guard open. ***********************************************************/
 

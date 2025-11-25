@@ -49,7 +49,7 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         # Add user sources here
         Core/maze_bot_driver/maze_bot_can_dbc.c
-        Core/maze_bot_driver/maze_bot_can_driver.c
+        Core/maze_bot_driver/can_driver/can_driver.c
         Core/sh2/euler.c
         Core/sh2/sh2.c
         Core/sh2/sh2_SensorValue.c

@@ -7,18 +7,87 @@
 /** Includes. *****************************************************************/
 
 #include "maze_bot_can_dbc.h"
+
 #include "maze_navigation.h"
 
 /** Public variables. *********************************************************/
 
 const can_message_t dbc_messages[] = {
     {
+        .name = "msg1",
+        .message_id = 256,
+        .id_mask = 0xFFFFFFFF,
+        .dlc = 8,
+        .rx_handler = (can_rx_handler_t)process_msg1,
+        .tx_handler = 0, // (can_tx_handler_t)my_tx_handler_func,
+        .signal_count = 2,
+        .signals =
+            {
+                {
+                    .name = "v1",
+                    .start_bit = 0,
+                    .bit_length = 32,
+                    .byte_order = CAN_LITTLE_ENDIAN,
+                    .is_signed = false,
+                    .scale = 1.0f,
+                    .offset = 0.0f,
+                    .min_value = -3.4e+38f,
+                    .max_value = 3.4e+38f,
+                },
+                {
+                    .name = "v2",
+                    .start_bit = 32,
+                    .bit_length = 32,
+                    .byte_order = CAN_LITTLE_ENDIAN,
+                    .is_signed = false,
+                    .scale = 1.0f,
+                    .offset = 0.0f,
+                    .min_value = -3.4e+38f,
+                    .max_value = 3.4e+38f,
+                },
+            },
+    },
+    {
+        .name = "msg2",
+        .message_id = 257,
+        .id_mask = 0xFFFFFFFF,
+        .dlc = 8,
+        .rx_handler = (can_rx_handler_t)process_msg2,
+        .tx_handler = 0, // (can_tx_handler_t)my_tx_handler_func,
+        .signal_count = 2,
+        .signals =
+            {
+                {
+                    .name = "v3",
+                    .start_bit = 0,
+                    .bit_length = 32,
+                    .byte_order = CAN_LITTLE_ENDIAN,
+                    .is_signed = false,
+                    .scale = 1.0f,
+                    .offset = 0.0f,
+                    .min_value = -3.4e+38f,
+                    .max_value = 3.4e+38f,
+                },
+                {
+                    .name = "v4",
+                    .start_bit = 32,
+                    .bit_length = 32,
+                    .byte_order = CAN_LITTLE_ENDIAN,
+                    .is_signed = false,
+                    .scale = 1.0f,
+                    .offset = 0.0f,
+                    .min_value = -3.4e+38f,
+                    .max_value = 3.4e+38f,
+                },
+            },
+    },
+    {
         .name = "state",
         .message_id = 257,
         .id_mask = 0xFFFFFFFF,
         .dlc = 1,
-        .rx_handler = 0,
-        .tx_handler = 0,
+        .rx_handler = 0, // (can_rx_handler_t)my_rx_handler_func,
+        .tx_handler = 0, // (can_tx_handler_t)my_tx_handler_func,
         .signal_count = 1,
         .signals =
             {
@@ -36,68 +105,12 @@ const can_message_t dbc_messages[] = {
             },
     },
     {
-        .name = "vision",
-        .message_id = 16,
-        .id_mask = 0xFFFFFFFF,
-        .dlc = 8,
-        .rx_handler = (can_rx_handler_t)process_vision,
-        .tx_handler = 0,
-        .signal_count = 4,
-        .signals =
-            {
-                {
-                    .name = "x1",
-                    .start_bit = 0,
-                    .bit_length = 16,
-                    .byte_order = CAN_LITTLE_ENDIAN,
-                    .is_signed = true,
-                    .scale = 1.0f,
-                    .offset = 0.0f,
-                    .min_value = 0.0f,
-                    .max_value = 65535.0f,
-                },
-                {
-                    .name = "y1",
-                    .start_bit = 16,
-                    .bit_length = 16,
-                    .byte_order = CAN_LITTLE_ENDIAN,
-                    .is_signed = true,
-                    .scale = 1.0f,
-                    .offset = 0.0f,
-                    .min_value = 0.0f,
-                    .max_value = 65535.0f,
-                },
-                {
-                    .name = "x2",
-                    .start_bit = 32,
-                    .bit_length = 16,
-                    .byte_order = CAN_LITTLE_ENDIAN,
-                    .is_signed = true,
-                    .scale = 1.0f,
-                    .offset = 0.0f,
-                    .min_value = 0.0f,
-                    .max_value = 65535.0f,
-                },
-                {
-                    .name = "y2",
-                    .start_bit = 48,
-                    .bit_length = 16,
-                    .byte_order = CAN_LITTLE_ENDIAN,
-                    .is_signed = true,
-                    .scale = 1.0f,
-                    .offset = 0.0f,
-                    .min_value = 0.0f,
-                    .max_value = 65535.0f,
-                },
-            },
-    },
-    {
         .name = "rtc",
         .message_id = 600,
         .id_mask = 0xFFFFFFFF,
         .dlc = 8,
-        .rx_handler = 0,
-        .tx_handler = 0,
+        .rx_handler = 0, // (can_rx_handler_t)my_rx_handler_func,
+        .tx_handler = 0, // (can_tx_handler_t)my_tx_handler_func,
         .signal_count = 8,
         .signals =
             {
