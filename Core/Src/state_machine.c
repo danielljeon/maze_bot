@@ -152,7 +152,7 @@ void run_state_machine(void) {
       h_bridge_linear = 0.0f;
       next_state();
     } else {
-      h_bridge_linear = 0.01f;
+      h_bridge_linear = 0.35f;
       watchdog_count++;
     }
     break;
@@ -163,7 +163,7 @@ void run_state_machine(void) {
       h_bridge_linear = 0.0f;
       next_state();
     } else {
-      h_bridge_linear = 0.01f;
+      h_bridge_linear = 0.35f;
       watchdog_count++;
     }
     break;
