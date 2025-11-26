@@ -92,10 +92,10 @@ void control_loops_init(void) {
   // Outer loop.
   pid_init(&heading_pid_controller);
   heading_pid_controller.k_p = 2.0f;
-  heading_pid_controller.k_i = 0.0f;
-  heading_pid_controller.k_d = 0.0f;
+  heading_pid_controller.k_i = 0.1f;
+  heading_pid_controller.k_d = 0.3f;
   heading_pid_controller.tau = 0.1f;
-  heading_pid_controller.T = 0.010f;
+  heading_pid_controller.T = 0.020f;
   heading_pid_controller.output_min = -2.5f;
   heading_pid_controller.output_max = 2.5f;
   heading_pid_controller.integral_min = -0.6f;
@@ -104,8 +104,8 @@ void control_loops_init(void) {
   // Inner loop.
   pid_init(&yaw_rate_pid_controller);
   yaw_rate_pid_controller.k_p = 0.35f;
-  yaw_rate_pid_controller.k_i = 0.0f;
-  yaw_rate_pid_controller.k_d = 0.0f;
+  yaw_rate_pid_controller.k_i = 0.01f;
+  yaw_rate_pid_controller.k_d = 0.005f;
   yaw_rate_pid_controller.tau = 0.02f;
   yaw_rate_pid_controller.T = 0.005f;
   yaw_rate_pid_controller.output_min = -1.0f;
