@@ -25,6 +25,9 @@ extern volatile float v4;
 void process_msg1(can_header_t *header, uint8_t *data);
 void process_msg2(can_header_t *header, uint8_t *data);
 
+float get_fused_package_distance(void);
+
+void align_package_heading(void);
 void corridor_straight(void);
 void corridor_stop(void);
 
