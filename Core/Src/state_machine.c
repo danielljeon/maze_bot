@@ -177,7 +177,7 @@ void run_state_machine(void) {
       h_bridge_linear = 0.0f;
       next_state();
     } else {
-      h_bridge_linear = 0.35f;
+      h_bridge_linear = 0.1f;
       watchdog_count++;
     }
     break;
@@ -188,13 +188,16 @@ void run_state_machine(void) {
       h_bridge_linear = 0.0f;
       next_state();
     } else {
-      h_bridge_linear = 0.35f;
+      h_bridge_linear = 0.1f;
       watchdog_count++;
     }
     break;
 
   case STATE_CORRIDOR_FOR_TICKS:
-    if (watchdog_count > playbook[playbook_index].watchdog_max) {
+    if (watchdog_count == 0) {
+      set_relative_heading(0);
+      watchdog_count++;
+    } else if (watchdog_count > playbook[playbook_index].watchdog_max) {
       corridor_stop();
       next_state();
     } else {
@@ -204,8 +207,11 @@ void run_state_machine(void) {
     break;
 
   case STATE_CORRIDOR_UNTIL_MM:
-    if (watchdog_count > playbook[playbook_index].watchdog_max ||
-        front_mm <= playbook[playbook_index].condition) {
+    if (watchdog_count == 0) {
+      set_relative_heading(0);
+      watchdog_count++;
+    } else if (watchdog_count > playbook[playbook_index].watchdog_max ||
+               front_mm <= playbook[playbook_index].condition) {
       corridor_stop();
       next_state();
     } else {
