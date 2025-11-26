@@ -37,12 +37,12 @@ void process_msg2(can_header_t *header, uint8_t *data) {
 /** Private variables. ********************************************************/
 
 // Calibrations.
-static const float V_FAST = 0.2f;     // Forward command in [-1,1].
-static const float K_THETA = 0.8f;    // Corridor parallel gain (rad -> cmd).
-static const float KX_OVER_L = 0.03f; // Centering bias gain (mm^-1).
+static const float V_FAST = 0.1f;     // Forward command in [-1,1].
+static const float K_THETA = 0.3f;    // Corridor parallel gain (rad -> cmd).
+static const float KX_OVER_L = 0.05f; // Centering bias gain (mm^-1).
 
 // Heading nudge calibrations.
-static const float HEADING_STEP_MAX = 0.25f; // Max heading nudge (rad).
+static const float HEADING_STEP_MAX = 0.3f; // Max heading nudge (rad).
 
 /** Private functions. ********************************************************/
 
