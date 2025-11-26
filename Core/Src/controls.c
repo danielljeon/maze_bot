@@ -95,7 +95,7 @@ void control_loops_init(void) {
   heading_pid_controller.k_i = 0.1f;
   heading_pid_controller.k_d = 0.3f;
   heading_pid_controller.tau = 0.1f;
-  heading_pid_controller.T = 0.020f;
+  heading_pid_controller.T = 0.010f;
   heading_pid_controller.output_min = -2.5f;
   heading_pid_controller.output_max = 2.5f;
   heading_pid_controller.integral_min = -0.6f;
