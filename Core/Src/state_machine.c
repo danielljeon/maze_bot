@@ -21,7 +21,7 @@ static uint16_t state_standby_counter = 0;
 
 /** Definitions. **************************************************************/
 
-#define STATE_MACHINE_PLAYBOOK_COUNT 10
+#define STATE_MACHINE_PLAYBOOK_COUNT 16
 #define STATE_MACHINE_INITIAL_STATE STATE_INIT
 #define STATE_MACHINE_FINAL_STATE STATE_IDLE
 
@@ -33,51 +33,99 @@ act_t playbook[STATE_MACHINE_PLAYBOOK_COUNT] = {
     {
         .state = STATE_MACHINE_INITIAL_STATE,
         .condition = 0,
+        .override = false,
         .watchdog_max = 0,
     },
     {
         .state = STATE_STANDBY,
         .condition = 0,
+        .override = false,
         .watchdog_max = 0,
     },
     {
-        .state = STATE_CORRIDOR_FOR_TICKS,
-        .condition = 50,
-        .watchdog_max = 50,
+        .state = STATE_TURN_FOR_TICKS,
+        .condition = 1.570796f, // 90 deg.
+        .override = false,
+        .watchdog_max = 200,
     },
     {
-        .state = STATE_CORRIDOR_UNTIL_MM,
-        .condition = 100,
-        .watchdog_max = 10000,
+        .state = STATE_ADVANCE_UNTIL_MM,
+        .condition = 80,
+        .override = true,
+        .override_param = 0.5f,
+        .watchdog_max = 1000,
     },
     {
         .state = STATE_TURN_FOR_TICKS,
-        .condition = -1.570796f,
-        .watchdog_max = 100,
+        .condition = -1.570796f, // 90 deg.
+        .override = false,
+        .watchdog_max = 200,
     },
     {
-        .state = STATE_CORRIDOR_FOR_TICKS,
-        .condition = 50,
-        .watchdog_max = 50,
-    },
-    {
-        .state = STATE_CORRIDOR_UNTIL_MM,
-        .condition = 700,
+        .state = STATE_ADVANCE_UNTIL_MM,
+        .condition = 65,
+        .override = true,
+        .override_param = 0.5f,
         .watchdog_max = 5000,
     },
     {
         .state = STATE_TURN_FOR_TICKS,
-        .condition = -1.570796f,
-        .watchdog_max = 100,
+        .condition = -1.570796f, // 90 deg.
+        .override = false,
+        .watchdog_max = 200,
     },
     {
-        .state = STATE_CORRIDOR_FOR_TICKS,
-        .condition = 50,
-        .watchdog_max = 50,
+        .state = STATE_ADVANCE_FOR_TICKS,
+        .condition = 1000,
+        .override = false,
+        .watchdog_max = 1000,
+    },
+    {
+        .state = STATE_CORRIDOR_UNTIL_MM,
+        .condition = 60,
+        .override = false,
+        .watchdog_max = 200,
+    },
+    {
+        .state = STATE_TURN_FOR_TICKS,
+        .condition = -1.570796f, // 90 deg.
+        .override = false,
+        .watchdog_max = 200,
+    },
+    {
+        .state = STATE_ADVANCE_FOR_TICKS,
+        .condition = 200,
+        .override = false,
+        .watchdog_max = 200,
+    },
+    {
+        .state = STATE_CORRIDOR_UNTIL_MM,
+        .condition = 60,
+        .override = false,
+        .watchdog_max = 200,
+    },
+    {
+        .state = STATE_TURN_FOR_TICKS,
+        .condition = -1.570796f, // 90 deg.
+        .override = false,
+        .watchdog_max = 200,
+    },
+    {
+        .state = STATE_ADVANCE_FOR_TICKS,
+        .condition = 200,
+        .override = false,
+        .watchdog_max = 200,
+    },
+    {
+        .state = STATE_CORRIDOR_UNTIL_MM,
+        .condition = 100,
+        .override = false,
+        .watchdog_max = 1000,
     },
     {
         .state = STATE_MACHINE_FINAL_STATE,
         .condition = 0,
+        .override = false,
         .watchdog_max = 0,
     },
 };
@@ -177,7 +225,11 @@ void run_state_machine(void) {
       h_bridge_linear = 0.0f;
       next_state();
     } else {
-      h_bridge_linear = 0.1f;
+      if (playbook[playbook_index].override == true) {
+        h_bridge_linear = playbook[playbook_index].override_param;
+      } else {
+        h_bridge_linear = 0.1f;
+      }
       watchdog_count++;
     }
     break;
@@ -188,7 +240,11 @@ void run_state_machine(void) {
       h_bridge_linear = 0.0f;
       next_state();
     } else {
-      h_bridge_linear = 0.1f;
+      if (playbook[playbook_index].override == true) {
+        h_bridge_linear = playbook[playbook_index].override_param;
+      } else {
+        h_bridge_linear = 0.1f;
+      }
       watchdog_count++;
     }
     break;
@@ -218,6 +274,36 @@ void run_state_machine(void) {
       corridor_straight();
       watchdog_count++;
     }
+    break;
+
+  case STATE_ALIGN_PACKAGE_HEADING:
+    if (watchdog_count == 0) {
+
+      align_package_heading();
+      watchdog_count++;
+    } else if (watchdog_count > playbook[playbook_index].watchdog_max ||
+               front_mm <= playbook[playbook_index].condition) {
+      corridor_stop();
+      next_state();
+    } else {
+
+      watchdog_count++;
+    }
+    break;
+
+  case STATE_ALIGN_PACKAGE_DISTANCE:
+    if (watchdog_count == 0) {
+      h_bridge_linear = 0.02f;
+      watchdog_count++;
+    } else if (watchdog_count > playbook[playbook_index].watchdog_max ||
+               get_fused_package_distance() <=
+                   playbook[playbook_index].condition) {
+      h_bridge_linear = 0;
+      next_state();
+    } else {
+      watchdog_count++;
+    }
+    next_state();
     break;
 
   case STATE_PICKUP_PACKAGE:

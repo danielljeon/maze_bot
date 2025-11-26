@@ -153,6 +153,24 @@ float corridor_parallel_error_rad(const float left_mm, const float right_mm,
 
 /** Public functions. *********************************************************/
 
+float get_fused_package_distance(void) {
+  const float tof_front_mm = vl53l4cd_distance_mm[1];
+  const float vision_front_mm = v2 * 0.5;
+  const float distance = (tof_front_mm + vision_front_mm) / 2;
+  return distance;
+}
+
+void align_package_heading(void) {
+  float steer = v1 * 0.5;
+
+  if (steer > 0.7853982f)
+    steer = 0.7853982f;
+  if (steer < -0.7853982f)
+    steer = -0.7853982f;
+
+  set_relative_heading(steer);
+}
+
 void corridor_straight(void) {
   const float left_mm = vl53l4cd_distance_mm[0];
   const float right_mm = vl53l4cd_distance_mm[2];

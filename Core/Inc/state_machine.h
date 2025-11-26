@@ -6,6 +6,10 @@
 
 #ifndef MAZE_BOT__STATE_MACHINE_H
 #define MAZE_BOT__STATE_MACHINE_H
+
+/** Includes. *****************************************************************/
+
+#include <stdbool.h>
 #include <stdint.h>
 
 /** Public types. *************************************************************/
@@ -20,13 +24,17 @@ typedef enum state_machine {
   STATE_ADVANCE_UNTIL_MM,
   STATE_CORRIDOR_FOR_TICKS,
   STATE_CORRIDOR_UNTIL_MM,
+  STATE_ALIGN_PACKAGE_HEADING,
+  STATE_ALIGN_PACKAGE_DISTANCE,
   STATE_PICKUP_PACKAGE,
   STATE_DROP_PACKAGE,
 } state_t;
 
 typedef struct playbook_act {
-  state_t state;   // State machine state.
-  float condition; // Generalized condition value.
+  state_t state;        // State machine state.
+  float condition;      // Generalized condition value.
+  bool override;        // Generalized override condition value.
+  float override_param; // Generalized override parameter value.
   // (Type cast in state machine if required).
   uint16_t watchdog_max; // Maximum state soft-watchdog tick count.
 } act_t;
