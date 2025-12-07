@@ -8,7 +8,8 @@
 <!-- TOC -->
 * [Changelog](#changelog)
   * [v0.1.0 (2025-10-17)](#v010--2025-10-17-)
-  * [v0.2.0 (2025-11-05)](#v020-2025-11-05)
+  * [v0.2.0 (2025-11-05)](#v020--2025-11-05-)
+  * [v0.3.0 (2025-12-06)](#v030--2025-12-06-)
 <!-- TOC -->
 
 </details>
@@ -37,7 +38,10 @@
 - Update VL53L4CD driver for simplicity, triple TOF and concurrent sensor
   operation.
 
-## [v0.3.0 (TBD)](https://github.com/danielljeon/maze_bot/releases/tag/v0.3.0)
+## [v0.3.0 (2025-12-06)](https://github.com/danielljeon/maze_bot/releases/tag/v0.3.0)
 
 - Third release (project Phase C).
 - Restructure for CAN bus utilization.
+- Re-do pinout configurations for NUCLEO-L432KC hardware.
+    - Implement CAN bus and remove unnecessary pins.
+- Add high level python maze solving script for offline solving.
