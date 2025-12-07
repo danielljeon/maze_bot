@@ -28,9 +28,9 @@ Terrain and maze solving robot for mechatronics design university course
 
 ## 1 Overview
 
-|                 Heading Control                  |
-|:------------------------------------------------:|
-| ![heading_control.gif](docs/heading_control.gif) |
+|                 Heading Control                  |   Offline Maze Solving for Partial Autonomous Driving    |
+|:------------------------------------------------:|:--------------------------------------------------------:|
+| ![heading_control.gif](docs/heading_control.gif) | ![example_pathing.png](docs/pathing/example_pathing.png) |
 
 ### 1.1 Bill of Materials (BOM)
 
